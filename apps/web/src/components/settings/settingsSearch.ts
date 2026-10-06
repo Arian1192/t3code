@@ -236,6 +236,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["fade overlay darken wallpaper readable"],
   },
   {
+    id: "setting-chat-background-blur",
+    title: "Chat background blur",
+    to: "/settings/appearance",
+    searchTerms: ["soften frosted wallpaper gaussian"],
+  },
+  {
     id: "diff-color-scheme",
     title: "Diff colors",
     to: "/settings/appearance",

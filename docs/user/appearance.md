@@ -43,7 +43,9 @@ background.
 On web and desktop, enter an `http` or `https` image or GIF URL under **Settings → Appearance →
 Chat background** to show it behind the messages and composer. The sidebar and the header stay
 unchanged. **Chat background dim** fades the image with your theme's background color, from 0% to
-100% (70% by default), so messages stay readable. Clear the URL to turn it off. Like the composer
+100% (70% by default), so messages stay readable. **Chat background blur** softens the image only,
+not the dim, from 0% (off, the default) to 100% (24 px). Blurring an animated GIF costs GPU, so
+keep it low on slower machines. Clear the URL to turn it off. Like the composer
 background, it is saved per device or browser and hidden while reduced motion is enabled in your
 operating system or the window is in the background.
 

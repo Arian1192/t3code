@@ -1155,3 +1155,19 @@ describe("ClientSettings chat background", () => {
     expect(decodeClientSettingsPatch({ chatBackgroundUrl: url }).chatBackgroundUrl).toBe(url);
   });
 });
+
+describe("ClientSettings chat background blur", () => {
+  it("defaults to no blur", () => {
+    expect(decodeClientSettings({}).chatBackgroundBlur).toBe(0);
+  });
+
+  it.each([-1, 101, 12.5])("rejects an invalid chat background blur: %s", (value) => {
+    expect(() => decodeClientSettings({ chatBackgroundBlur: value })).toThrow();
+    expect(() => decodeClientSettingsPatch({ chatBackgroundBlur: value })).toThrow();
+  });
+
+  it.each([0, 50, 100])("accepts a chat background blur: %s", (value) => {
+    expect(decodeClientSettings({ chatBackgroundBlur: value }).chatBackgroundBlur).toBe(value);
+    expect(decodeClientSettingsPatch({ chatBackgroundBlur: value }).chatBackgroundBlur).toBe(value);
+  });
+});
