@@ -7,6 +7,7 @@ import {
   type ComponentProps,
   type CSSProperties,
 } from "react";
+import { ChatBackgroundLayer } from "./ChatBackgroundLayer";
 import { ChatCanvasContext } from "./ChatCanvasContext";
 import { resolveChatCanvasLayout, type ChatCanvasPreview } from "./chatCanvasLayout";
 import type { PreviewMiniPlayerObstacles } from "../preview/previewMiniPlayerLayout";
@@ -126,7 +127,7 @@ export function ChatCanvas({
         ref={elementRef}
         data-chat-canvas
         data-preview-overlaps-chat={layout.overlapsChat || undefined}
-        className="relative flex min-h-0 min-w-0 flex-1 flex-col"
+        className="relative isolate flex min-h-0 min-w-0 flex-1 flex-col"
         style={
           {
             "--chat-timeline-gutter": `${measurements.timelineGutter}px`,
@@ -140,6 +141,7 @@ export function ChatCanvas({
           aria-hidden
           className="pointer-events-none invisible absolute h-0 w-(--chat-content-max-width) min-w-[40rem] box-content ps-3 sm:ps-12"
         />
+        <ChatBackgroundLayer />
         {children}
       </div>
     </ChatCanvasContext>
