@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from "react-dom/server";
 import { beforeEach, describe, expect, it, vi } from "vite-plus/test";
 
-const state = vi.hoisted(() => ({ composer: "", chat: "", dim: 70 }));
+const state = vi.hoisted(() => ({ composer: "", chat: "", dim: 70, blur: 0 }));
 
 vi.mock("~/hooks/useSettings", () => ({
   useClientSettings: (
@@ -9,12 +9,14 @@ vi.mock("~/hooks/useSettings", () => ({
       composerBackgroundUrl: string;
       chatBackgroundUrl: string;
       chatBackgroundDim: number;
+      chatBackgroundBlur: number;
     }) => unknown,
   ) =>
     selector({
       composerBackgroundUrl: state.composer,
       chatBackgroundUrl: state.chat,
       chatBackgroundDim: state.dim,
+      chatBackgroundBlur: state.blur,
     }),
 }));
 
@@ -25,6 +27,7 @@ beforeEach(() => {
   state.composer = "";
   state.chat = "";
   state.dim = 70;
+  state.blur = 0;
 });
 
 describe("ComposerBackgroundLayer", () => {
@@ -61,5 +64,14 @@ describe("ChatBackgroundLayer", () => {
     expect(html).toContain("bg-background");
     expect(html).toContain("opacity:0.7");
     expect(html).toContain("pointer-events-none");
+  });
+
+  it("blurs only the image when the blur setting is above zero", () => {
+    state.chat = "https://example.com/forest.gif";
+    expect(renderToStaticMarkup(<ChatBackgroundLayer />)).not.toContain("filter:blur");
+    state.blur = 50;
+    const html = renderToStaticMarkup(<ChatBackgroundLayer />);
+    expect(html).toContain("filter:blur(12px)");
+    expect(html).toContain('data-slot="chat-background"');
   });
 });
