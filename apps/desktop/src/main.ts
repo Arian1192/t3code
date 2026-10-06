@@ -37,6 +37,7 @@ import * as DesktopApp from "./app/DesktopApp.ts";
 import * as DesktopAppActivation from "./app/DesktopAppActivation.ts";
 import * as DesktopWebLinks from "./app/DesktopWebLinks.ts";
 import * as DesktopAppIdentity from "./app/DesktopAppIdentity.ts";
+import * as ForkAppIcon from "./app/ForkAppIcon.ts";
 import * as DesktopConnectionCatalogStore from "./app/DesktopConnectionCatalogStore.ts";
 import * as DesktopClerk from "./app/DesktopClerk.ts";
 import * as DesktopCliCommand from "./app/DesktopCliCommand.ts";
@@ -183,6 +184,7 @@ const layerDesktopSnapShot = DesktopSnapShot.layer.pipe(
   Layer.provideMerge(layerDesktopWindow),
   Layer.provideMerge(layerDesktopFoundation),
 );
+const layerForkAppIcon = ForkAppIcon.layer.pipe(Layer.provideMerge(layerDesktopFoundation));
 const layerDesktopAppActivation = DesktopAppActivation.layer.pipe(
   Layer.provide(layerDesktopWindow),
 );
@@ -223,6 +225,7 @@ const layerDesktopApplication = Layer.mergeAll(
   layerDesktopSsh,
 ).pipe(
   Layer.provideMerge(layerDesktopSnapShot),
+  Layer.provideMerge(layerForkAppIcon),
   Layer.provideMerge(DesktopUpdates.layer),
   Layer.provideMerge(layerDesktopWslBackend),
   Layer.provideMerge(layerDesktopLocalEnvironmentAuth),

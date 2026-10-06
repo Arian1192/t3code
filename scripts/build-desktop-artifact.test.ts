@@ -278,13 +278,13 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
 
   it("switches desktop packaging icons to the nightly artwork for nightly versions", () => {
     assert.deepStrictEqual(resolveDesktopBuildIconAssets("0.0.17"), {
-      macIconPng: BRAND_ASSET_PATHS.productionMacIconPng,
+      macIconPng: BRAND_ASSET_PATHS.forkMacIconPng,
       linuxIconPng: BRAND_ASSET_PATHS.productionLinuxIconPng,
       windowsIconIco: BRAND_ASSET_PATHS.productionWindowsIconIco,
     });
 
     assert.deepStrictEqual(resolveDesktopBuildIconAssets("0.0.17-nightly.20260413.42"), {
-      macIconPng: BRAND_ASSET_PATHS.nightlyMacIconPng,
+      macIconPng: BRAND_ASSET_PATHS.forkMacIconPng,
       linuxIconPng: BRAND_ASSET_PATHS.nightlyLinuxIconPng,
       windowsIconIco: BRAND_ASSET_PATHS.nightlyWindowsIconIco,
     });
@@ -583,6 +583,8 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
       "!**/*.d.cts",
       "!apps/desktop/resources/browser-secret",
       "!apps/desktop/resources/browser-secret/**/*",
+      "!apps/desktop/prod-resources/app-icons",
+      "!apps/desktop/prod-resources/app-icons/**/*",
       "!apps/desktop/prod-resources/browser-secret",
       "!apps/desktop/prod-resources/browser-secret/**/*",
       "!apps/desktop/prod-resources/windows-server",
@@ -2174,6 +2176,10 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
       {
         from: "apps/desktop/prod-resources/resource-monitor",
         to: "resource-monitor",
+      },
+      {
+        from: "apps/desktop/prod-resources/app-icons",
+        to: "app-icons",
       },
     ]);
     assert.deepStrictEqual(resolveResourceMonitorRustTargets("mac", "universal"), [

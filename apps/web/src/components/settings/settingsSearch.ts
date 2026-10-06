@@ -259,6 +259,14 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["soften frosted wallpaper gaussian"],
   },
   {
+    id: "setting-app-icon",
+    title: "App icon",
+    to: "/settings/appearance",
+    searchTerms: ["dock icon seasonal holiday calendar halloween christmas"],
+    desktopOnly: true,
+    macOnly: true,
+  },
+  {
     id: "diff-color-scheme",
     title: "Diff colors",
     to: "/settings/appearance",

@@ -1119,3 +1119,18 @@ describe("ClientSettings chat background blur", () => {
     expect(decodeClientSettingsPatch({ chatBackgroundBlur: value }).chatBackgroundBlur).toBe(value);
   });
 });
+
+describe("ClientSettings appIcon", () => {
+  it("defaults to following the calendar", () => {
+    expect(decodeClientSettings({}).appIcon).toBe("calendar");
+  });
+
+  it("accepts a fixed variant in settings and patches", () => {
+    expect(decodeClientSettings({ appIcon: "sakura" }).appIcon).toBe("sakura");
+    expect(decodeClientSettingsPatch({ appIcon: "halloween" }).appIcon).toBe("halloween");
+  });
+
+  it("rejects unknown icon ids", () => {
+    expect(() => decodeClientSettings({ appIcon: "nope" })).toThrow();
+  });
+});

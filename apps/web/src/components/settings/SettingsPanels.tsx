@@ -8,6 +8,8 @@ import { Link, useNavigate } from "@tanstack/react-router";
 import type { CSSProperties, ReactNode } from "react";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
+  APP_ICON_VARIANTS,
+  type AppIconSetting,
   type BackgroundActivityProfile,
   type DesktopUpdateChannel,
   ProviderDriverKind,
@@ -172,6 +174,20 @@ import {
   useSettingsSearchTargetId,
 } from "./settingsLayout";
 import { searchableSetting } from "./settingsSearch";
+
+const APP_ICON_LABELS: Record<AppIconSetting, string> = {
+  calendar: "Follow calendar",
+  halloween: "Halloween",
+  christmas: "Christmas",
+  "pixel-stars": "Pixel stars",
+  carnival: "Carnival",
+  "pixel-night-sky": "Pixel night sky",
+  autumn: "Autumn",
+  sakura: "Sakura",
+  "tropical-beach": "Tropical beach",
+  "tropical-flowers": "Tropical flowers",
+  winter: "Winter",
+};
 import { ProjectFavicon } from "../ProjectFavicon";
 import { PanelAnimationsPreview } from "./PanelAnimationsPreview";
 
@@ -559,6 +575,7 @@ export function useSettingsRestore(onRestored?: () => void) {
       ...(settings.chatBackgroundBlur !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundBlur
         ? ["Chat background blur"]
         : []),
+      ...(settings.appIcon !== DEFAULT_UNIFIED_SETTINGS.appIcon ? ["App icon"] : []),
       ...(settings.diffColorScheme !== DEFAULT_UNIFIED_SETTINGS.diffColorScheme
         ? ["Diff colors"]
         : []),
@@ -721,6 +738,7 @@ export function useSettingsRestore(onRestored?: () => void) {
       settings.chatBackgroundUrl,
       settings.chatBackgroundDim,
       settings.chatBackgroundBlur,
+      settings.appIcon,
       settings.panelAnimationDurationMs,
       settings.responseStreamingMode,
       settings.persistComposerContextStrip,
@@ -832,6 +850,7 @@ export function useSettingsRestore(onRestored?: () => void) {
       chatBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.chatBackgroundUrl,
       chatBackgroundDim: DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim,
       chatBackgroundBlur: DEFAULT_UNIFIED_SETTINGS.chatBackgroundBlur,
+      appIcon: DEFAULT_UNIFIED_SETTINGS.appIcon,
       panelAnimationDurationMs: DEFAULT_UNIFIED_SETTINGS.panelAnimationDurationMs,
       sidebarThreadPreviewCount: DEFAULT_UNIFIED_SETTINGS.sidebarThreadPreviewCount,
       sidebarProjectGroupingMode: DEFAULT_UNIFIED_SETTINGS.sidebarProjectGroupingMode,
@@ -1488,6 +1507,40 @@ export function AppearanceSettingsPanel() {
             </div>
           }
         />
+
+        {isElectron && isMacPlatform(navigator.platform) ? (
+          <SettingsRow
+            {...searchableSetting("setting-app-icon")}
+            description="Dock icon while T3 Code is running. Follow calendar switches it by season and holidays."
+            resetAction={
+              settings.appIcon !== DEFAULT_UNIFIED_SETTINGS.appIcon ? (
+                <SettingResetButton
+                  label="app icon"
+                  onClick={() => updateSettings({ appIcon: DEFAULT_UNIFIED_SETTINGS.appIcon })}
+                />
+              ) : null
+            }
+            control={
+              <Select
+                value={settings.appIcon}
+                onValueChange={(value) => {
+                  if (value !== null) updateSettings({ appIcon: value as AppIconSetting });
+                }}
+              >
+                <SelectTrigger size="sm" className="w-full sm:w-44" aria-label="App icon">
+                  <SelectValue>{APP_ICON_LABELS[settings.appIcon]}</SelectValue>
+                </SelectTrigger>
+                <SelectPopup align="end" alignItemWithTrigger={false}>
+                  {(["calendar", ...APP_ICON_VARIANTS] as const).map((id) => (
+                    <SelectItem hideIndicator key={id} value={id}>
+                      {APP_ICON_LABELS[id]}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            }
+          />
+        ) : null}
 
         {showEnvironmentIdentification ? (
           <SettingsRow

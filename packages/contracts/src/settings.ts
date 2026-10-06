@@ -1,3 +1,4 @@
+import { AppIconSetting } from "./appIcon.ts";
 import { SshDeviceHostConfigs } from "./device.ts";
 import {
   AuthSettingsWriteScope,
@@ -411,6 +412,7 @@ export const ClientSettingsSchema = Schema.Struct({
   chatBackgroundBlur: ChatBackgroundBlur.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CHAT_BACKGROUND_BLUR)),
   ),
+  appIcon: AppIconSetting.pipe(Schema.withDecodingDefault(Effect.succeed("calendar" as const))),
   fontSizeInterface: InterfaceFontSize.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_INTERFACE_FONT_SIZE)),
   ),
@@ -1643,6 +1645,7 @@ export const ClientSettingsPatch = Schema.Struct({
   chatBackgroundUrl: Schema.optionalKey(Schema.String),
   chatBackgroundDim: Schema.optionalKey(ChatBackgroundDim),
   chatBackgroundBlur: Schema.optionalKey(ChatBackgroundBlur),
+  appIcon: Schema.optionalKey(AppIconSetting),
   onboardingCompletedAt: Schema.optionalKey(Schema.NullOr(Schema.String)),
   fontSizeInterface: Schema.optionalKey(InterfaceFontSize),
   fontSizePrompt: Schema.optionalKey(PromptFontSize),
