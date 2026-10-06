@@ -20,6 +20,7 @@ import { useCustomThemes } from "../../hooks/useCustomThemes";
 import { useTheme } from "../../hooks/useTheme";
 import { useScopedSettings, useUpdateScopedSettings } from "./useScopedSettings";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
+import { DraftInput } from "../ui/draft-input";
 import { Switch } from "../ui/switch";
 import { ThemeLibrary } from "./ThemeSettings";
 import {
@@ -195,6 +196,34 @@ export function AppearanceSettingsPanel() {
                 value={settings.glassOpacity}
               />
             </div>
+          }
+        />
+
+        <SettingsRow
+          {...searchableSetting("setting-composer-background")}
+          description="Show an image or GIF behind the composer. Enter an http or https URL; leave empty to turn off. Hidden while reduced motion is on or the window is in the background."
+          resetAction={
+            settings.composerBackgroundUrl !== DEFAULT_UNIFIED_SETTINGS.composerBackgroundUrl ? (
+              <SettingResetButton
+                label="composer background"
+                onClick={() =>
+                  updateSettings({
+                    composerBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.composerBackgroundUrl,
+                  })
+                }
+              />
+            ) : null
+          }
+          control={
+            <DraftInput
+              size="sm"
+              className="w-full sm:w-72"
+              value={settings.composerBackgroundUrl}
+              onCommit={(next) => updateSettings({ composerBackgroundUrl: next.trim() })}
+              placeholder="https://example.com/background.gif"
+              spellCheck={false}
+              aria-label="Composer background URL"
+            />
           }
         />
 
