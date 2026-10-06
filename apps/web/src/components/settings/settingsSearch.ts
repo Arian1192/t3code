@@ -235,6 +235,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["transparent transparency solid menus dialogs composer"],
   },
   {
+    id: "setting-composer-background",
+    title: "Composer background",
+    to: "/settings/appearance",
+    searchTerms: ["image gif url wallpaper animated input chat"],
+  },
+  {
     id: "diff-color-scheme",
     title: "Diff colors",
     to: "/settings/appearance",
