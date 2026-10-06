@@ -411,6 +411,9 @@ export function useSettingsRestore(onRestored?: () => void) {
     ...(settings.chatBackgroundDim !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim
       ? ["Chat background dim"]
       : []),
+    ...(settings.chatBackgroundBlur !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundBlur
+      ? ["Chat background blur"]
+      : []),
     ...(settings.diffColorScheme !== DEFAULT_UNIFIED_SETTINGS.diffColorScheme
       ? ["Diff colors"]
       : []),
@@ -611,6 +614,7 @@ export function useSettingsRestore(onRestored?: () => void) {
       composerBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.composerBackgroundUrl,
       chatBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.chatBackgroundUrl,
       chatBackgroundDim: DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim,
+      chatBackgroundBlur: DEFAULT_UNIFIED_SETTINGS.chatBackgroundBlur,
       panelAnimationDurationMs: DEFAULT_UNIFIED_SETTINGS.panelAnimationDurationMs,
       sidebarThreadPreviewCount: DEFAULT_UNIFIED_SETTINGS.sidebarThreadPreviewCount,
       sidebarProjectGroupingMode: DEFAULT_UNIFIED_SETTINGS.sidebarProjectGroupingMode,
