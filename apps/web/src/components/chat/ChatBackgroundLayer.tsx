@@ -6,11 +6,13 @@ import { BackgroundMediaLayer } from "./BackgroundMediaLayer";
 export function ChatBackgroundLayer() {
   const rawUrl = useClientSettings((settings) => settings.chatBackgroundUrl);
   const dim = useClientSettings((settings) => settings.chatBackgroundDim);
+  const blur = useClientSettings((settings) => settings.chatBackgroundBlur);
   return (
     <BackgroundMediaLayer
       slot="chat-background"
       href={resolveBackgroundImageUrl(rawUrl)}
       dim={dim}
+      blur={blur}
     />
   );
 }
