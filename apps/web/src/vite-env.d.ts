@@ -15,6 +15,9 @@ interface ImportMetaEnv {
   readonly VITE_RELAY_OTLP_TRACES_TOKEN: string;
   readonly T3CODE_DESKTOP_UPDATE_REPOSITORY: string;
   readonly APP_VERSION: string;
+  // Fork: set at build time by vite.config.ts, empty when git info is unavailable.
+  readonly FORK_UPSTREAM_BASE_SHA: string;
+  readonly FORK_REPO_ROOT: string;
 }
 
 interface ImportMeta {
