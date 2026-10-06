@@ -58,7 +58,7 @@ import { ChildProcess, ChildProcessSpawner } from "effect/process";
 const LINUX_ICON_SIZES = [16, 22, 24, 32, 48, 64, 128, 256, 512] as const;
 // Fork identity: distinct from the official app so both can be installed side by side.
 const DESKTOP_APP_ID = "com.t3tools.t3code.fork";
-const DESKTOP_FORK_PRODUCT_NAME = "T3 Code (Fork)";
+const DESKTOP_FORK_PRODUCT_NAME = "T3-X Code";
 // Only these are registered with the OS; the renderer's internal scheme is unchanged.
 // `t3code` is kept so link-based sign-ins (Codex, T3 Connect) can return to this app.
 const DESKTOP_MAC_URL_SCHEMES = ["t3code-fork", "t3code"];

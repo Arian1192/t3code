@@ -272,8 +272,8 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
   });
 
   it("uses the fork product name regardless of release channel", () => {
-    assert.equal(resolveDesktopProductName("0.0.17"), "T3 Code (Fork)");
-    assert.equal(resolveDesktopProductName("0.0.17-nightly.20260413.42"), "T3 Code (Fork)");
+    assert.equal(resolveDesktopProductName("0.0.17"), "T3-X Code");
+    assert.equal(resolveDesktopProductName("0.0.17-nightly.20260413.42"), "T3-X Code");
   });
 
   it("switches desktop packaging icons to the nightly artwork for nightly versions", () => {
@@ -684,7 +684,7 @@ it.layer(NodeServices.layer)("build-desktop-artifact", (it) => {
         "**/*.map",
       ]);
       assert.deepStrictEqual(mac.dmg, {
-        title: "T3 Code (Fork) 1.2.3 Installer",
+        title: "T3-X Code 1.2.3 Installer",
         background: "dmg/dmg-background-latest.png",
         window: { width: 640, height: 432 },
         contents: [
