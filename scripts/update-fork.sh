@@ -39,6 +39,8 @@ if [[ "${1:-}" == "--no-build" ]]; then
   exit 0
 fi
 
+# Keep only the latest build: upstream version bumps would otherwise pile up ~300 MB per version.
+rm -f release/*.dmg release/*.zip release/*.blockmap
 vp run dist:desktop:dmg:arm64
 
 if [[ "${1:-}" == "--install" ]]; then
