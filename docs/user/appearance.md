@@ -29,6 +29,15 @@ The controls retreat as the composer docks after you send the first message.
 Turn on **Composer context** to keep those controls visible after the thread starts. This preference
 applies to the web and desktop clients.
 
+## Composer background
+
+On web and desktop, enter an `http` or `https` image URL under **Settings → Appearance → Composer
+background** to show it behind the composer. Animated GIF URLs play as-is. The image sits behind the
+composer's glass layer, so **Glass opacity** controls how much of it shows through. Clear the field
+to turn it off. Other URL types are ignored. The URL is saved on each device or browser, and the
+image is hidden while reduced motion is enabled in your operating system or the window is in the
+background.
+
 ## Motion
 
 The main sidebar, right panel, and terminal drawer open and close immediately by default. Move the

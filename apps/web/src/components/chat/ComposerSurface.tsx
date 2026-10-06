@@ -1,11 +1,13 @@
 import type { ComponentProps } from "react";
 
 import { cn } from "~/lib/utils";
+import { ComposerBackgroundLayer } from "./ComposerBackgroundLayer";
 
 /** One glass backdrop until a top attachment needs the composer to cover its overlap. */
 function Shell({
   contextStrip = false,
   className,
+  children,
   ...props
 }: ComponentProps<"div"> & { contextStrip?: boolean }) {
   return (
@@ -32,7 +34,13 @@ function Shell({
         className,
       )}
       {...props}
-    />
+    >
+      {/* Sits behind the glass layer and stops above the context strip like the glass does. */}
+      <ComposerBackgroundLayer
+        className={contextStrip ? "bottom-(--chat-composer-context-extension)" : undefined}
+      />
+      {children}
+    </div>
   );
 }
 

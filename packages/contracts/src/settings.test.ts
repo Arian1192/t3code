@@ -1120,3 +1120,17 @@ describe("ServerSettings.removeAgentCreditsOnMerge", () => {
     ).toBe(true);
   });
 });
+
+describe("ClientSettings composer background URL", () => {
+  it("is off by default", () => {
+    expect(decodeClientSettings({}).composerBackgroundUrl).toBe("");
+  });
+
+  it("accepts a value and a patch", () => {
+    const url = "https://example.com/rain.gif";
+    expect(decodeClientSettings({ composerBackgroundUrl: url }).composerBackgroundUrl).toBe(url);
+    expect(decodeClientSettingsPatch({ composerBackgroundUrl: url }).composerBackgroundUrl).toBe(
+      url,
+    );
+  });
+});
