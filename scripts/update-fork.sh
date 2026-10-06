@@ -4,7 +4,7 @@
 #   --install  after building, quit the running app, replace it in /Applications and reopen it.
 set -euo pipefail
 
-APP_NAME="T3 Code (Fork)"
+APP_NAME="T3-X Code"
 
 cd "$(git rev-parse --show-toplevel)"
 
