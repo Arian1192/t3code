@@ -405,6 +405,12 @@ export function useSettingsRestore(onRestored?: () => void) {
     ...(settings.composerBackgroundUrl !== DEFAULT_UNIFIED_SETTINGS.composerBackgroundUrl
       ? ["Composer background"]
       : []),
+    ...(settings.chatBackgroundUrl !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundUrl
+      ? ["Chat background"]
+      : []),
+    ...(settings.chatBackgroundDim !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim
+      ? ["Chat background dim"]
+      : []),
     ...(settings.diffColorScheme !== DEFAULT_UNIFIED_SETTINGS.diffColorScheme
       ? ["Diff colors"]
       : []),
@@ -603,6 +609,8 @@ export function useSettingsRestore(onRestored?: () => void) {
       environmentIdentificationMode: DEFAULT_UNIFIED_SETTINGS.environmentIdentificationMode,
       glassOpacity: DEFAULT_UNIFIED_SETTINGS.glassOpacity,
       composerBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.composerBackgroundUrl,
+      chatBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.chatBackgroundUrl,
+      chatBackgroundDim: DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim,
       panelAnimationDurationMs: DEFAULT_UNIFIED_SETTINGS.panelAnimationDurationMs,
       sidebarThreadPreviewCount: DEFAULT_UNIFIED_SETTINGS.sidebarThreadPreviewCount,
       sidebarProjectGroupingMode: DEFAULT_UNIFIED_SETTINGS.sidebarProjectGroupingMode,

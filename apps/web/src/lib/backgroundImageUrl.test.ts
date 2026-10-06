@@ -1,15 +1,13 @@
 import { describe, expect, it } from "vite-plus/test";
 
-import { resolveComposerBackgroundUrl } from "./composerBackground";
+import { resolveBackgroundImageUrl } from "./backgroundImageUrl";
 
-describe("resolveComposerBackgroundUrl", () => {
+describe("resolveBackgroundImageUrl", () => {
   it("accepts http and https URLs and trims whitespace", () => {
-    expect(resolveComposerBackgroundUrl("  https://example.com/a.gif ")).toBe(
+    expect(resolveBackgroundImageUrl("  https://example.com/a.gif ")).toBe(
       "https://example.com/a.gif",
     );
-    expect(resolveComposerBackgroundUrl("http://example.com/a.png")).toBe(
-      "http://example.com/a.png",
-    );
+    expect(resolveBackgroundImageUrl("http://example.com/a.png")).toBe("http://example.com/a.png");
   });
 
   it.each([
@@ -22,11 +20,11 @@ describe("resolveComposerBackgroundUrl", () => {
     "blob:https://example.com/x",
     "ftp://example.com/a.gif",
   ])("rejects %j", (value) => {
-    expect(resolveComposerBackgroundUrl(value)).toBeNull();
+    expect(resolveBackgroundImageUrl(value)).toBeNull();
   });
 
   it("percent-encodes quotes and parentheses so they cannot escape a CSS string", () => {
-    const href = resolveComposerBackgroundUrl('https://example.com/a")b.gif');
+    const href = resolveBackgroundImageUrl('https://example.com/a")b.gif');
     expect(href).not.toBeNull();
     expect(href).not.toContain('"');
     expect(href).not.toContain(" ");
