@@ -28,6 +28,7 @@ import {
   type EnvironmentIdentificationMode,
   MAX_APPEARANCE_CONTRAST,
   MAX_CODE_FONT_SIZE,
+  MAX_CHAT_BACKGROUND_DIM,
   MAX_GLASS_OPACITY,
   MAX_INTERFACE_FONT_SIZE,
   MAX_PANEL_ANIMATION_DURATION_MS,
@@ -36,6 +37,7 @@ import {
   MAX_TERMINAL_FONT_SIZE,
   MIN_CODE_FONT_SIZE,
   MIN_APPEARANCE_CONTRAST,
+  MIN_CHAT_BACKGROUND_DIM,
   MIN_GLASS_OPACITY,
   MIN_INTERFACE_FONT_SIZE,
   MIN_PANEL_ANIMATION_DURATION_MS,
@@ -542,6 +544,12 @@ export function useSettingsRestore(onRestored?: () => void) {
       ...(settings.composerBackgroundUrl !== DEFAULT_UNIFIED_SETTINGS.composerBackgroundUrl
         ? ["Composer background"]
         : []),
+      ...(settings.chatBackgroundUrl !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundUrl
+        ? ["Chat background"]
+        : []),
+      ...(settings.chatBackgroundDim !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim
+        ? ["Chat background dim"]
+        : []),
       ...(settings.diffColorScheme !== DEFAULT_UNIFIED_SETTINGS.diffColorScheme
         ? ["Diff colors"]
         : []),
@@ -701,6 +709,8 @@ export function useSettingsRestore(onRestored?: () => void) {
       settings.fontSizeTerminal,
       settings.glassOpacity,
       settings.composerBackgroundUrl,
+      settings.chatBackgroundUrl,
+      settings.chatBackgroundDim,
       settings.panelAnimationDurationMs,
       settings.responseStreamingMode,
       settings.persistComposerContextStrip,
@@ -809,6 +819,8 @@ export function useSettingsRestore(onRestored?: () => void) {
       environmentIdentificationMode: DEFAULT_UNIFIED_SETTINGS.environmentIdentificationMode,
       glassOpacity: DEFAULT_UNIFIED_SETTINGS.glassOpacity,
       composerBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.composerBackgroundUrl,
+      chatBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.chatBackgroundUrl,
+      chatBackgroundDim: DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim,
       panelAnimationDurationMs: DEFAULT_UNIFIED_SETTINGS.panelAnimationDurationMs,
       sidebarThreadPreviewCount: DEFAULT_UNIFIED_SETTINGS.sidebarThreadPreviewCount,
       sidebarProjectGroupingMode: DEFAULT_UNIFIED_SETTINGS.sidebarProjectGroupingMode,
@@ -1165,6 +1177,13 @@ export function AppearanceSettingsPanel() {
     resolveEnvironmentIdentificationPillLabel(environmentStageLabel) !== null;
   const glassOpacityRatio =
     (settings.glassOpacity - MIN_GLASS_OPACITY) / (MAX_GLASS_OPACITY - MIN_GLASS_OPACITY);
+  const chatBackgroundDimRatio =
+    (settings.chatBackgroundDim - MIN_CHAT_BACKGROUND_DIM) /
+    (MAX_CHAT_BACKGROUND_DIM - MIN_CHAT_BACKGROUND_DIM);
+  const chatBackgroundDimSliderStyle = {
+    "--settings-slider-progress": `${chatBackgroundDimRatio * 100}%`,
+    "--settings-slider-fill-offset": `${0.5 - chatBackgroundDimRatio}rem`,
+  } as CSSProperties;
   const glassOpacitySliderStyle = {
     "--settings-slider-progress": `${glassOpacityRatio * 100}%`,
     "--settings-slider-fill-offset": `${0.5 - glassOpacityRatio}rem`,
@@ -1324,6 +1343,78 @@ export function AppearanceSettingsPanel() {
               spellCheck={false}
               aria-label="Composer background URL"
             />
+          }
+        />
+
+        <SettingsRow
+          {...searchableSetting("setting-chat-background")}
+          description="Show an image or GIF behind the chat. Enter an http or https URL; leave empty to turn off. Hidden while reduced motion is on or the window is in the background."
+          resetAction={
+            settings.chatBackgroundUrl !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundUrl ? (
+              <SettingResetButton
+                label="chat background"
+                onClick={() =>
+                  updateSettings({ chatBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.chatBackgroundUrl })
+                }
+              />
+            ) : null
+          }
+          control={
+            <DraftInput
+              size="sm"
+              className="w-full sm:w-72"
+              value={settings.chatBackgroundUrl}
+              onCommit={(next) => updateSettings({ chatBackgroundUrl: next.trim() })}
+              placeholder="https://example.com/background.gif"
+              spellCheck={false}
+              aria-label="Chat background URL"
+            />
+          }
+        />
+
+        <SettingsRow
+          {...searchableSetting("setting-chat-background-dim")}
+          description="Higher values fade the chat background more so messages stay readable."
+          resetAction={
+            settings.chatBackgroundDim !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim ? (
+              <SettingResetButton
+                label="chat background dim"
+                onClick={() =>
+                  updateSettings({ chatBackgroundDim: DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim })
+                }
+              />
+            ) : null
+          }
+          control={
+            <div className="flex w-full items-center gap-3 sm:w-52">
+              <output
+                className="min-w-12 rounded-md bg-muted px-2 py-1 text-center font-mono text-xs font-medium tabular-nums text-foreground"
+                htmlFor="chat-background-dim"
+              >
+                {settings.chatBackgroundDim}%
+              </output>
+              <input
+                aria-label="Chat background dim"
+                className="settings-slider min-w-0 flex-1"
+                id="chat-background-dim"
+                max={MAX_CHAT_BACKGROUND_DIM}
+                min={MIN_CHAT_BACKGROUND_DIM}
+                onChange={(event) => {
+                  const chatBackgroundDim = Number(event.currentTarget.value);
+                  if (
+                    Number.isInteger(chatBackgroundDim) &&
+                    chatBackgroundDim >= MIN_CHAT_BACKGROUND_DIM &&
+                    chatBackgroundDim <= MAX_CHAT_BACKGROUND_DIM
+                  ) {
+                    updateSettings({ chatBackgroundDim });
+                  }
+                }}
+                step={5}
+                style={chatBackgroundDimSliderStyle}
+                type="range"
+                value={settings.chatBackgroundDim}
+              />
+            </div>
           }
         />
 

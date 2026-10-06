@@ -38,6 +38,15 @@ to turn it off. Other URL types are ignored. The URL is saved on each device or 
 image is hidden while reduced motion is enabled in your operating system or the window is in the
 background.
 
+## Chat background
+
+On web and desktop, enter an `http` or `https` image or GIF URL under **Settings → Appearance →
+Chat background** to show it behind the messages and composer. The sidebar and the header stay
+unchanged. **Chat background dim** fades the image with your theme's background color, from 0% to
+100% (70% by default), so messages stay readable. Clear the URL to turn it off. Like the composer
+background, it is saved per device or browser and hidden while reduced motion is enabled in your
+operating system or the window is in the background.
+
 ## Motion
 
 The main sidebar, right panel, and terminal drawer open and close immediately by default. Move the

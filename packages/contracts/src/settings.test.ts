@@ -1134,3 +1134,24 @@ describe("ClientSettings composer background URL", () => {
     );
   });
 });
+
+describe("ClientSettings chat background", () => {
+  it("is off by default with a readable dim", () => {
+    const settings = decodeClientSettings({});
+    expect(settings.chatBackgroundUrl).toBe("");
+    expect(settings.chatBackgroundDim).toBe(70);
+  });
+
+  it.each([-1, 101, 55.5])("rejects an invalid chat background dim: %s", (value) => {
+    expect(() => decodeClientSettings({ chatBackgroundDim: value })).toThrow();
+    expect(() => decodeClientSettingsPatch({ chatBackgroundDim: value })).toThrow();
+  });
+
+  it.each([0, 40, 100])("accepts chat background settings: %s", (value) => {
+    const url = "https://example.com/forest.gif";
+    expect(decodeClientSettings({ chatBackgroundDim: value }).chatBackgroundDim).toBe(value);
+    expect(decodeClientSettingsPatch({ chatBackgroundDim: value }).chatBackgroundDim).toBe(value);
+    expect(decodeClientSettings({ chatBackgroundUrl: url }).chatBackgroundUrl).toBe(url);
+    expect(decodeClientSettingsPatch({ chatBackgroundUrl: url }).chatBackgroundUrl).toBe(url);
+  });
+});

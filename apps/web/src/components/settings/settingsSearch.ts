@@ -224,6 +224,18 @@ export const SETTINGS_SEARCH_ITEMS = [
     searchTerms: ["image gif url wallpaper animated input chat"],
   },
   {
+    id: "setting-chat-background",
+    title: "Chat background",
+    to: "/settings/appearance",
+    searchTerms: ["image gif url wallpaper animated messages pane"],
+  },
+  {
+    id: "setting-chat-background-dim",
+    title: "Chat background dim",
+    to: "/settings/appearance",
+    searchTerms: ["fade overlay darken wallpaper readable"],
+  },
+  {
     id: "diff-color-scheme",
     title: "Diff colors",
     to: "/settings/appearance",
