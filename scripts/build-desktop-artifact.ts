@@ -56,7 +56,11 @@ import { Command, Flag } from "effect/cli";
 import { ChildProcess, ChildProcessSpawner } from "effect/process";
 
 const LINUX_ICON_SIZES = [16, 22, 24, 32, 48, 64, 128, 256, 512] as const;
-const DESKTOP_APP_ID = "com.t3tools.t3code";
+// Fork identity: distinct from the official app so both can be installed side by side.
+const DESKTOP_APP_ID = "com.t3tools.t3code.fork";
+const DESKTOP_FORK_PRODUCT_NAME = "T3 Code (Fork)";
+// Only these are registered with the OS; the renderer's internal scheme is unchanged.
+const DESKTOP_MAC_URL_SCHEMES = ["t3code-fork"];
 const APPLE_TEAM_ID_PATTERN = /^[A-Z0-9]{10}$/u;
 
 const BuildPlatform = Schema.Literals(["mac", "linux", "win"]);
@@ -2741,10 +2745,8 @@ export function resolvePackageManagerUserAgent(packageManager: string): string {
   return `${trimmed.slice(0, versionSeparator)}/${trimmed.slice(versionSeparator + 1)}`;
 }
 
-export function resolveDesktopProductName(version: string): string {
-  return resolveDesktopUpdateChannel(version) === "nightly"
-    ? "T3 Code (Nightly)"
-    : (desktopPackageJson.productName ?? "T3 Code");
+export function resolveDesktopProductName(_version: string): string {
+  return DESKTOP_FORK_PRODUCT_NAME;
 }
 
 export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
@@ -2837,7 +2839,7 @@ export const createBuildConfig = Effect.fn("createBuildConfig")(function* (
       protocols: [
         {
           name: "T3 Code",
-          schemes: ["t3code", "t3code-dev"],
+          schemes: DESKTOP_MAC_URL_SCHEMES,
         },
         // Lets people choose T3 Code as their default web browser, which opens
         // each link in a new thread's browser panel.
