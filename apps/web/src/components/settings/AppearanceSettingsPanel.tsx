@@ -1,5 +1,6 @@
 import type { CSSProperties } from "react";
 import { useState } from "react";
+import { APP_ICON_VARIANTS, type AppIconSetting } from "@t3tools/contracts";
 import {
   DEFAULT_ENVIRONMENT_IDENTIFICATION_MODE,
   DEFAULT_UNIFIED_SETTINGS,
@@ -20,6 +21,8 @@ import {
   resolveEnvironmentIdentificationPillLabel,
   useEnvironmentStageLabel,
 } from "../SidebarStageBackdrop";
+import { isElectron } from "../../env";
+import { isMacPlatform } from "../../lib/utils";
 import { useCustomThemes } from "../../hooks/useCustomThemes";
 import { useTheme } from "../../hooks/useTheme";
 import { useScopedSettings, useUpdateScopedSettings } from "./useScopedSettings";
@@ -41,6 +44,20 @@ const ENVIRONMENT_IDENTIFICATION_LABELS: Record<EnvironmentIdentificationMode, s
   artwork: "Artwork",
   pill: "Version pill",
   none: "None",
+};
+
+const APP_ICON_LABELS: Record<AppIconSetting, string> = {
+  calendar: "Follow calendar",
+  halloween: "Halloween",
+  christmas: "Christmas",
+  "pixel-stars": "Pixel stars",
+  carnival: "Carnival",
+  "pixel-night-sky": "Pixel night sky",
+  autumn: "Autumn",
+  sakura: "Sakura",
+  "tropical-beach": "Tropical beach",
+  "tropical-flowers": "Tropical flowers",
+  winter: "Winter",
 };
 
 const CHAT_WIDTH_LABELS: Record<ChatWidth, string> = {
@@ -364,6 +381,40 @@ export function AppearanceSettingsPanel() {
             </div>
           }
         />
+
+        {isElectron && isMacPlatform(navigator.platform) ? (
+          <SettingsRow
+            {...searchableSetting("setting-app-icon")}
+            description="Dock icon while T3 Code is running. Follow calendar switches it by season and holidays."
+            resetAction={
+              settings.appIcon !== DEFAULT_UNIFIED_SETTINGS.appIcon ? (
+                <SettingResetButton
+                  label="app icon"
+                  onClick={() => updateSettings({ appIcon: DEFAULT_UNIFIED_SETTINGS.appIcon })}
+                />
+              ) : null
+            }
+            control={
+              <Select
+                value={settings.appIcon}
+                onValueChange={(value) => {
+                  if (value !== null) updateSettings({ appIcon: value as AppIconSetting });
+                }}
+              >
+                <SelectTrigger size="sm" className="w-full sm:w-44" aria-label="App icon">
+                  <SelectValue>{APP_ICON_LABELS[settings.appIcon]}</SelectValue>
+                </SelectTrigger>
+                <SelectPopup align="end" alignItemWithTrigger={false}>
+                  {(["calendar", ...APP_ICON_VARIANTS] as const).map((id) => (
+                    <SelectItem hideIndicator key={id} value={id}>
+                      {APP_ICON_LABELS[id]}
+                    </SelectItem>
+                  ))}
+                </SelectPopup>
+              </Select>
+            }
+          />
+        ) : null}
 
         {showEnvironmentIdentification ? (
           <SettingsRow
