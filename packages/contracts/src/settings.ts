@@ -112,6 +112,16 @@ export const ChatBackgroundDim = Schema.Int.check(
 );
 export type ChatBackgroundDim = typeof ChatBackgroundDim.Type;
 const DEFAULT_CHAT_BACKGROUND_DIM: ChatBackgroundDim = 70;
+export const MIN_CHAT_BACKGROUND_BLUR = 0;
+export const MAX_CHAT_BACKGROUND_BLUR = 100;
+export const ChatBackgroundBlur = Schema.Int.check(
+  Schema.isBetween({
+    minimum: MIN_CHAT_BACKGROUND_BLUR,
+    maximum: MAX_CHAT_BACKGROUND_BLUR,
+  }),
+);
+export type ChatBackgroundBlur = typeof ChatBackgroundBlur.Type;
+const DEFAULT_CHAT_BACKGROUND_BLUR: ChatBackgroundBlur = 0;
 
 export const MIN_APPEARANCE_CONTRAST = 50;
 export const MAX_APPEARANCE_CONTRAST = 200;
@@ -397,6 +407,9 @@ export const ClientSettingsSchema = Schema.Struct({
   chatBackgroundUrl: Schema.String.pipe(Schema.withDecodingDefault(Effect.succeed(""))),
   chatBackgroundDim: ChatBackgroundDim.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CHAT_BACKGROUND_DIM)),
+  ),
+  chatBackgroundBlur: ChatBackgroundBlur.pipe(
+    Schema.withDecodingDefault(Effect.succeed(DEFAULT_CHAT_BACKGROUND_BLUR)),
   ),
   fontSizeInterface: InterfaceFontSize.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_INTERFACE_FONT_SIZE)),
@@ -1629,6 +1642,7 @@ export const ClientSettingsPatch = Schema.Struct({
   composerBackgroundUrl: Schema.optionalKey(Schema.String),
   chatBackgroundUrl: Schema.optionalKey(Schema.String),
   chatBackgroundDim: Schema.optionalKey(ChatBackgroundDim),
+  chatBackgroundBlur: Schema.optionalKey(ChatBackgroundBlur),
   onboardingCompletedAt: Schema.optionalKey(Schema.NullOr(Schema.String)),
   fontSizeInterface: Schema.optionalKey(InterfaceFontSize),
   fontSizePrompt: Schema.optionalKey(PromptFontSize),

@@ -30,6 +30,7 @@ import {
   type EnvironmentIdentificationMode,
   MAX_APPEARANCE_CONTRAST,
   MAX_CODE_FONT_SIZE,
+  MAX_CHAT_BACKGROUND_BLUR,
   MAX_CHAT_BACKGROUND_DIM,
   MAX_GLASS_OPACITY,
   MAX_INTERFACE_FONT_SIZE,
@@ -39,6 +40,7 @@ import {
   MAX_TERMINAL_FONT_SIZE,
   MIN_CODE_FONT_SIZE,
   MIN_APPEARANCE_CONTRAST,
+  MIN_CHAT_BACKGROUND_BLUR,
   MIN_CHAT_BACKGROUND_DIM,
   MIN_GLASS_OPACITY,
   MIN_INTERFACE_FONT_SIZE,
@@ -554,6 +556,9 @@ export function useSettingsRestore(onRestored?: () => void) {
       ...(settings.chatBackgroundDim !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim
         ? ["Chat background dim"]
         : []),
+      ...(settings.chatBackgroundBlur !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundBlur
+        ? ["Chat background blur"]
+        : []),
       ...(settings.diffColorScheme !== DEFAULT_UNIFIED_SETTINGS.diffColorScheme
         ? ["Diff colors"]
         : []),
@@ -715,6 +720,7 @@ export function useSettingsRestore(onRestored?: () => void) {
       settings.composerBackgroundUrl,
       settings.chatBackgroundUrl,
       settings.chatBackgroundDim,
+      settings.chatBackgroundBlur,
       settings.panelAnimationDurationMs,
       settings.responseStreamingMode,
       settings.persistComposerContextStrip,
@@ -825,6 +831,7 @@ export function useSettingsRestore(onRestored?: () => void) {
       composerBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.composerBackgroundUrl,
       chatBackgroundUrl: DEFAULT_UNIFIED_SETTINGS.chatBackgroundUrl,
       chatBackgroundDim: DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim,
+      chatBackgroundBlur: DEFAULT_UNIFIED_SETTINGS.chatBackgroundBlur,
       panelAnimationDurationMs: DEFAULT_UNIFIED_SETTINGS.panelAnimationDurationMs,
       sidebarThreadPreviewCount: DEFAULT_UNIFIED_SETTINGS.sidebarThreadPreviewCount,
       sidebarProjectGroupingMode: DEFAULT_UNIFIED_SETTINGS.sidebarProjectGroupingMode,
@@ -1193,6 +1200,13 @@ export function AppearanceSettingsPanel() {
     "--settings-slider-progress": `${chatBackgroundDimRatio * 100}%`,
     "--settings-slider-fill-offset": `${0.5 - chatBackgroundDimRatio}rem`,
   } as CSSProperties;
+  const chatBackgroundBlurRatio =
+    (settings.chatBackgroundBlur - MIN_CHAT_BACKGROUND_BLUR) /
+    (MAX_CHAT_BACKGROUND_BLUR - MIN_CHAT_BACKGROUND_BLUR);
+  const chatBackgroundBlurSliderStyle = {
+    "--settings-slider-progress": `${chatBackgroundBlurRatio * 100}%`,
+    "--settings-slider-fill-offset": `${0.5 - chatBackgroundBlurRatio}rem`,
+  } as CSSProperties;
   const glassOpacitySliderStyle = {
     "--settings-slider-progress": `${glassOpacityRatio * 100}%`,
     "--settings-slider-fill-offset": `${0.5 - glassOpacityRatio}rem`,
@@ -1422,6 +1436,54 @@ export function AppearanceSettingsPanel() {
                 style={chatBackgroundDimSliderStyle}
                 type="range"
                 value={settings.chatBackgroundDim}
+              />
+            </div>
+          }
+        />
+
+        <SettingsRow
+          {...searchableSetting("setting-chat-background-blur")}
+          description="Blur the chat background image. Blurring an animated GIF uses more GPU."
+          resetAction={
+            settings.chatBackgroundBlur !== DEFAULT_UNIFIED_SETTINGS.chatBackgroundBlur ? (
+              <SettingResetButton
+                label="chat background blur"
+                onClick={() =>
+                  updateSettings({
+                    chatBackgroundBlur: DEFAULT_UNIFIED_SETTINGS.chatBackgroundBlur,
+                  })
+                }
+              />
+            ) : null
+          }
+          control={
+            <div className="flex w-full items-center gap-3 sm:w-52">
+              <output
+                className="min-w-12 rounded-md bg-muted px-2 py-1 text-center font-mono text-xs font-medium tabular-nums text-foreground"
+                htmlFor="chat-background-blur"
+              >
+                {settings.chatBackgroundBlur}%
+              </output>
+              <input
+                aria-label="Chat background blur"
+                className="settings-slider min-w-0 flex-1"
+                id="chat-background-blur"
+                max={MAX_CHAT_BACKGROUND_BLUR}
+                min={MIN_CHAT_BACKGROUND_BLUR}
+                onChange={(event) => {
+                  const chatBackgroundBlur = Number(event.currentTarget.value);
+                  if (
+                    Number.isInteger(chatBackgroundBlur) &&
+                    chatBackgroundBlur >= MIN_CHAT_BACKGROUND_BLUR &&
+                    chatBackgroundBlur <= MAX_CHAT_BACKGROUND_BLUR
+                  ) {
+                    updateSettings({ chatBackgroundBlur });
+                  }
+                }}
+                step={5}
+                style={chatBackgroundBlurSliderStyle}
+                type="range"
+                value={settings.chatBackgroundBlur}
               />
             </div>
           }
