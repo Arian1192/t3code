@@ -3184,6 +3184,7 @@ export default function ChatView(props: ChatViewProps) {
   // while threadPanelHeaderControl would duplicate it beside it when the right panel is open.
   const anchorsControl = activeThreadKey ? (
     <MessageAnchorsControl
+      key={activeThreadKey}
       threadKey={activeThreadKey}
       messages={timelineMessages}
       timestampFormat={timestampFormat}
@@ -3219,6 +3220,7 @@ export default function ChatView(props: ChatViewProps) {
     <div
       ref={setWorkspaceLayoutElement}
       className="relative flex min-h-0 min-w-0 flex-1 overflow-hidden bg-background"
+      style={anchorColorStyle}
     >
       <DeviceSetupDialogHost
         threadKey={activeThreadKey}
@@ -3231,7 +3233,6 @@ export default function ChatView(props: ChatViewProps) {
           "flex min-h-0 min-w-0 flex-col overflow-x-hidden",
           rightPanelMaximized ? "w-0 flex-none" : "flex-1",
         )}
-        style={anchorColorStyle}
         data-chat-column-maximized-away={rightPanelMaximized ? "true" : "false"}
         data-chat-column
       >
