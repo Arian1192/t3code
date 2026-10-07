@@ -142,7 +142,6 @@ export const MessageAnchorsControl = memo(function MessageAnchorsControl({
                     setOpen(false);
                     onJump(anchor.messageId);
                   }}
-                  onDoubleClick={() => setEditingMessageId(anchor.messageId)}
                 >
                   <span className="w-9 shrink-0 text-2xs font-medium text-muted-foreground">
                     {anchor.role === "user" ? "You" : "Agent"}
