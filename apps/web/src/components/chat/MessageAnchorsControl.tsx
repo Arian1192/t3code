@@ -28,7 +28,11 @@ export const MessageAnchorsControl = memo(function MessageAnchorsControl({
   );
   const visible = useMemo(() => resolveVisibleAnchors(anchors, messages), [anchors, messages]);
 
-  if (visible.length === 0) return null;
+  if (visible.length === 0) {
+    // The control stays mounted while hidden, so a stale `open` must not reopen it on the next anchor.
+    if (open) setOpen(false);
+    return null;
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
