@@ -45,7 +45,37 @@ describe("messageAnchorStore", () => {
   });
 });
 
+describe("messageAnchorStore labels", () => {
+  it("renameAnchor stores and clears a label", () => {
+    useMessageAnchorStore.getState().toggleAnchor(KEY, "m1");
+    useMessageAnchorStore.getState().renameAnchor(KEY, "m1", "Sample JSON");
+    expect(useMessageAnchorStore.getState().anchorsByThread[KEY]?.[0]?.label).toBe("Sample JSON");
+    useMessageAnchorStore.getState().renameAnchor(KEY, "m1", "");
+    expect(useMessageAnchorStore.getState().anchorsByThread[KEY]?.[0]).not.toHaveProperty("label");
+  });
+});
+
 describe("migrateMessageAnchorState", () => {
+  it("keeps string labels and drops other label values", () => {
+    expect(
+      migrateMessageAnchorState({
+        anchorsByThread: {
+          [KEY]: [
+            { messageId: "m1", anchoredAt: "t", label: "Plan" },
+            { messageId: "m2", anchoredAt: "t", label: 42 },
+          ],
+        },
+      }),
+    ).toEqual({
+      anchorsByThread: {
+        [KEY]: [
+          { messageId: "m1", anchoredAt: "t", label: "Plan" },
+          { messageId: "m2", anchoredAt: "t" },
+        ],
+      },
+    });
+  });
+
   it("migrate rejects malformed payload", () => {
     expect(migrateMessageAnchorState(null)).toEqual({ anchorsByThread: {} });
     expect(migrateMessageAnchorState({ anchorsByThread: "nope" })).toEqual({

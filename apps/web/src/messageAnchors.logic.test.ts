@@ -2,7 +2,9 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   anchorPreview,
   isMessageAnchorable,
+  MAX_ANCHOR_LABEL_LENGTH,
   pruneAnchors,
+  renameMessageAnchor,
   resolveAnchorColor,
   resolveVisibleAnchors,
   toggleMessageAnchor,
@@ -54,7 +56,13 @@ describe("resolveVisibleAnchors", () => {
     ];
     const resolved = resolveVisibleAnchors(anchors, [...messages, msg("s", "system", "x", 4)]);
     expect(resolved).toEqual([
-      { messageId: "b", role: "assistant", preview: "second", createdAt: messages[1]!.createdAt },
+      {
+        messageId: "b",
+        role: "assistant",
+        preview: "second",
+        label: null,
+        createdAt: messages[1]!.createdAt,
+      },
     ]);
   });
 });
@@ -91,5 +99,50 @@ describe("resolveAnchorColor", () => {
     expect(resolveAnchorColor(undefined)).toBe("var(--primary)");
     expect(resolveAnchorColor("")).toBe("var(--primary)");
     expect(resolveAnchorColor("red")).toBe("var(--primary)");
+  });
+});
+
+describe("renameMessageAnchor", () => {
+  const anchors = [
+    { messageId: "a", anchoredAt: "1" },
+    { messageId: "b", anchoredAt: "2" },
+  ];
+
+  it("sets a trimmed label on one anchor only", () => {
+    expect(renameMessageAnchor(anchors, "a", "  Sample JSON  ")).toEqual([
+      { messageId: "a", anchoredAt: "1", label: "Sample JSON" },
+      { messageId: "b", anchoredAt: "2" },
+    ]);
+  });
+
+  it("clears the label when it is blank", () => {
+    const labelled = renameMessageAnchor(anchors, "a", "x");
+    expect(renameMessageAnchor(labelled, "a", "   ")).toEqual(anchors);
+  });
+
+  it("caps the label length", () => {
+    const [first] = renameMessageAnchor(anchors, "a", "x".repeat(200));
+    expect(first?.label).toHaveLength(MAX_ANCHOR_LABEL_LENGTH);
+  });
+
+  it("returns the same array for an unknown message", () => {
+    expect(renameMessageAnchor(anchors, "zzz", "x")).toBe(anchors);
+  });
+});
+
+describe("resolveVisibleAnchors labels", () => {
+  it("exposes the label, or null when unnamed", () => {
+    const messages = [msg("a", "user", "first", 1), msg("b", "assistant", "second", 2)];
+    const resolved = resolveVisibleAnchors(
+      [
+        { messageId: "a", anchoredAt: "1", label: "Plan" },
+        { messageId: "b", anchoredAt: "2" },
+      ],
+      messages,
+    );
+    expect(resolved.map((anchor) => [anchor.label, anchor.preview])).toEqual([
+      ["Plan", "first"],
+      [null, "second"],
+    ]);
   });
 });

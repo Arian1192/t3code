@@ -2,13 +2,19 @@ import { create } from "zustand";
 import { createJSONStorage, persist } from "zustand/middleware";
 
 import { resolveStorage } from "./lib/storage";
-import { type MessageAnchor, pruneAnchors, toggleMessageAnchor } from "./messageAnchors.logic";
+import {
+  type MessageAnchor,
+  pruneAnchors,
+  renameMessageAnchor,
+  toggleMessageAnchor,
+} from "./messageAnchors.logic";
 
 /** Message anchors live on this device only, keyed by `scopedThreadKey(threadRef)`. */
 interface MessageAnchorStoreState {
   readonly anchorsByThread: Readonly<Record<string, ReadonlyArray<MessageAnchor>>>;
   readonly toggleAnchor: (threadKey: string, messageId: string) => void;
   readonly removeAnchor: (threadKey: string, messageId: string) => void;
+  readonly renameAnchor: (threadKey: string, messageId: string, label: string) => void;
   /** Drops anchors whose message is gone; leaves state untouched when nothing changes. */
   readonly pruneThread: (threadKey: string, messageIds: ReadonlySet<string>) => void;
 }
@@ -45,7 +51,11 @@ export function migrateMessageAnchorState(persisted: unknown): {
     if (!Array.isArray(value)) continue;
     const anchors = value
       .filter(isMessageAnchor)
-      .map(({ messageId, anchoredAt }) => ({ messageId, anchoredAt }));
+      .map(({ messageId, anchoredAt, label }) =>
+        typeof label === "string" && label.length > 0
+          ? { messageId, anchoredAt, label }
+          : { messageId, anchoredAt },
+      );
     if (anchors.length > 0) anchorsByThread[threadKey] = anchors;
   }
   return { anchorsByThread };
@@ -77,6 +87,15 @@ export const useMessageAnchorStore = create<MessageAnchorStoreState>()(
             ),
           ),
         })),
+      renameAnchor: (threadKey, messageId, label) => {
+        const current = get().anchorsByThread[threadKey];
+        if (!current) return;
+        const renamed = renameMessageAnchor(current, messageId, label);
+        if (renamed === current) return;
+        set((state) => ({
+          anchorsByThread: withThreadAnchors(state.anchorsByThread, threadKey, renamed),
+        }));
+      },
       pruneThread: (threadKey, messageIds) => {
         const current = get().anchorsByThread[threadKey];
         if (!current) return;
