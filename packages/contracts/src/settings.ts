@@ -413,6 +413,8 @@ export const ClientSettingsSchema = Schema.Struct({
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_CHAT_BACKGROUND_BLUR)),
   ),
   appIcon: AppIconSetting.pipe(Schema.withDecodingDefault(Effect.succeed("calendar" as const))),
+  /** `#rrggbb` for anchored messages; empty means the theme primary colour. */
+  messageAnchorColor: Schema.String.pipe(Schema.withDecodingDefault(Effect.succeed(""))),
   fontSizeInterface: InterfaceFontSize.pipe(
     Schema.withDecodingDefault(Effect.succeed(DEFAULT_INTERFACE_FONT_SIZE)),
   ),
@@ -1646,6 +1648,7 @@ export const ClientSettingsPatch = Schema.Struct({
   chatBackgroundDim: Schema.optionalKey(ChatBackgroundDim),
   chatBackgroundBlur: Schema.optionalKey(ChatBackgroundBlur),
   appIcon: Schema.optionalKey(AppIconSetting),
+  messageAnchorColor: Schema.optionalKey(Schema.String),
   onboardingCompletedAt: Schema.optionalKey(Schema.NullOr(Schema.String)),
   fontSizeInterface: Schema.optionalKey(InterfaceFontSize),
   fontSizePrompt: Schema.optionalKey(PromptFontSize),

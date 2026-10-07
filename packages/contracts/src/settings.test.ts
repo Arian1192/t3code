@@ -1134,3 +1134,12 @@ describe("ClientSettings appIcon", () => {
     expect(() => decodeClientSettings({ appIcon: "nope" })).toThrow();
   });
 });
+
+describe("ClientSettings message anchor colour", () => {
+  it("defaults to empty and keeps a stored hex", () => {
+    expect(decodeClientSettings({}).messageAnchorColor).toBe("");
+    expect(decodeClientSettings({ messageAnchorColor: "#ff00aa" }).messageAnchorColor).toBe(
+      "#ff00aa",
+    );
+  });
+});
