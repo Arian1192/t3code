@@ -123,6 +123,7 @@ import type { Root, RootContent } from "mdast";
 import { T3Wordmark } from "../T3Wordmark";
 import { ThreadContextChip } from "../ThreadContextChip";
 import {
+  AnchorIcon,
   BotIcon,
   BrainIcon,
   CheckIcon,
@@ -186,6 +187,10 @@ import {
   timelineContentOverflowsViewport,
 } from "./timelineScrollAnchoring";
 import { MessageCopyButton } from "./MessageCopyButton";
+import { MessageAnchorButton } from "./MessageAnchorButton";
+import { EMPTY_ANCHORS, useMessageAnchorStore } from "~/messageAnchorStore";
+import { isMessageAnchorable } from "~/messageAnchors.logic";
+import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import { PierreEntryIcon } from "./PierreEntryIcon";
 import { inferEntryKindFromPath } from "../../pierre-icons";
 import { AssistantSelectionToolbar } from "./AssistantSelectionToolbar";
@@ -316,6 +321,10 @@ interface TimelineRowSharedState {
   timestampFormat: TimestampFormat;
   routeThreadKey: string;
   threadRef: ScopedThreadRef | null;
+  /** Scoped key for the message-anchor store; null when the thread ref is unknown. */
+  anchorThreadKey: string | null;
+  anchoredIds: ReadonlySet<string>;
+  highlightedMessageId: string | null;
   markdownCwd: string | undefined;
   resolvedTheme: "light" | "dark";
   workspaceRoot: string | undefined;
@@ -531,6 +540,8 @@ interface MessagesTimelineProps {
   onToolOutputCollapsedAtEnd?: () => void;
   onManualNavigation: () => void;
   findOpen?: boolean;
+  /** Scrolls to and briefly highlights a message when the nonce changes. */
+  jumpRequest?: { messageId: string; nonce: number } | null;
   cancelPositionRestoreRef?: React.RefObject<(() => void) | null> | undefined;
   hideEmptyPlaceholder?: boolean;
   topFadeEnabled?: boolean;
@@ -625,6 +636,7 @@ const ConversationTimeline = memo(function ConversationTimeline({
   liveFollowEnabled,
   onToolOutputCollapsedAtEnd,
   onManualNavigation,
+  jumpRequest = null,
   cancelPositionRestoreRef,
   hideEmptyPlaceholder = false,
   topFadeEnabled = false,
@@ -922,7 +934,45 @@ const ConversationTimeline = memo(function ConversationTimeline({
   // Run status/timestamps churn on every stream event; the shared row context
   // must not change with them or every timeline row re-renders per event.
   const runs = useStableHandoffRuns(runsProp);
-  const minimapItems = useMemo(() => deriveTimelineMinimapItems(rows), [rows]);
+  const anchorThreadKey = useMemo(
+    () => (citationThreadRef ? scopedThreadKey(citationThreadRef) : null),
+    [citationThreadRef],
+  );
+  const threadAnchors = useMessageAnchorStore(
+    (state) =>
+      (anchorThreadKey ? state.anchorsByThread[anchorThreadKey] : undefined) ?? EMPTY_ANCHORS,
+  );
+  const anchoredIds = useMemo(
+    () => new Set(threadAnchors.map((anchor) => anchor.messageId)),
+    [threadAnchors],
+  );
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const minimapItems = useMemo(
+    () => deriveTimelineMinimapItems(rows, anchoredIds),
+    [rows, anchoredIds],
+  );
+  const scrollToMessage = useCallback(
+    (messageId: string) => {
+      const index = rows.findIndex((row) => row.kind === "message" && row.message.id === messageId);
+      if (index < 0) return;
+      onManualNavigation();
+      void listRef.current?.scrollToIndex({ index, animated: true, viewOffset: 24 });
+      setHighlightedMessageId(messageId);
+    },
+    [listRef, onManualNavigation, rows],
+  );
+  // Only a new nonce jumps; later row updates must not re-scroll.
+  const handledJumpNonceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!jumpRequest || handledJumpNonceRef.current === jumpRequest.nonce) return;
+    handledJumpNonceRef.current = jumpRequest.nonce;
+    scrollToMessage(jumpRequest.messageId);
+  }, [jumpRequest, scrollToMessage]);
+  useEffect(() => {
+    if (highlightedMessageId === null) return;
+    const timer = setTimeout(() => setHighlightedMessageId(null), 1000);
+    return () => clearTimeout(timer);
+  }, [highlightedMessageId]);
   const restoreRowIndex =
     restoringThreadPosition && rememberedPosition?.atEnd === false
       ? rows.findIndex((row) => row.id === rememberedPosition.rowId)
@@ -1304,6 +1354,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
       routeThreadKey,
       // Keep Markdown callbacks memoized during unrelated activity updates.
       threadRef: citationThreadRef,
+      anchorThreadKey,
+      anchoredIds,
+      highlightedMessageId,
       markdownCwd,
       resolvedTheme,
       workspaceRoot,
@@ -1342,6 +1395,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
       timestampFormat,
       routeThreadKey,
       citationThreadRef,
+      anchorThreadKey,
+      anchoredIds,
+      highlightedMessageId,
       markdownCwd,
       resolvedTheme,
       workspaceRoot,
@@ -1630,6 +1686,12 @@ const ConversationTimeline = memo(function ConversationTimeline({
               currentIndex={minimapCurrentIndex}
               stripMap={minimapStripMap}
               onSelect={(item) => {
+                const anchoredRow =
+                  item.anchoredRowIndex === null ? undefined : rows[item.anchoredRowIndex];
+                if (anchoredRow?.kind === "message") {
+                  scrollToMessage(anchoredRow.message.id);
+                  return;
+                }
                 onManualNavigation();
                 void listRef.current?.scrollToIndex({
                   index: item.rowIndex,
@@ -1877,7 +1939,8 @@ function TimelineMinimap({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "group/strip pointer-events-none absolute left-0 h-0.5 w-6 origin-left -translate-y-1/2 rounded-full transition-transform duration-150",
+                    "group/strip pointer-events-none absolute left-0 w-6 origin-left -translate-y-1/2 rounded-full transition-transform duration-150",
+                    item.anchoredRowIndex !== null ? "h-1" : "h-0.5",
                     activeDistance === 0 ? "bg-muted-foreground/75" : "bg-muted-foreground/35",
                     activeDistance === 0
                       ? "scale-x-100"
@@ -1899,6 +1962,12 @@ function TimelineMinimap({
                   }}
                   style={{ top }}
                 >
+                  {item.anchoredRowIndex !== null ? (
+                    <span
+                      className="absolute inset-0 rounded-full"
+                      style={{ backgroundColor: "var(--anchor-color)" }}
+                    />
+                  ) : null}
                   <span className="absolute inset-0 rounded-full bg-foreground/90 opacity-0 transition-opacity duration-150 group-data-[in-view=true]/strip:opacity-100" />
                 </span>
               );
@@ -1914,8 +1983,16 @@ function TimelineMinimap({
                 }}
               >
                 <span className="dropdown-glass block rounded-xl p-3 text-left text-popover-foreground shadow-xl shadow-black/25">
-                  <span className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium leading-5">
-                    {activeItem.userText ?? "User message"}
+                  <span className="flex max-w-full items-center gap-1.5 text-sm font-medium leading-5">
+                    {activeItem.anchoredRowIndex !== null ? (
+                      <AnchorIcon
+                        className="size-3 shrink-0"
+                        style={{ color: "var(--anchor-color)" }}
+                      />
+                    ) : null}
+                    <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                      {activeItem.userText ?? "User message"}
+                    </span>
                   </span>
                   {activeItem.assistantText ? (
                     <span
@@ -1999,6 +2076,8 @@ type TimelineWorkEntry = Extract<MessagesTimelineRow, { kind: "work" }>["grouped
 type TimelineRow = MessagesTimelineRow;
 
 const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: TimelineRow }) {
+  const { highlightedMessageId } = use(TimelineRowCtx);
+  const highlighted = row.kind === "message" && row.message.id === highlightedMessageId;
   const isExpandedToolGroup = row.kind === "work" && row.isExpandedToolGroup;
   const isSubagentGroup = row.kind === "event" && row.projectedItem.item.type === "subagent";
   const isWorkLogRow =
@@ -2033,9 +2112,12 @@ const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: Time
           row.kind === "assistant-meta"
           ? "group/assistant"
           : null,
+        highlighted && "rounded-lg bg-accent/40",
       )}
       data-timeline-row-id={row.id}
       data-timeline-row-kind={row.kind}
+      // Ring drawn as a shadow in the anchor colour; no ring-* token takes a CSS variable.
+      style={highlighted ? { boxShadow: "0 0 0 1px var(--anchor-color)" } : undefined}
       data-message-id={
         row.kind === "message" || row.kind === "assistant-meta" ? row.message.id : undefined
       }
@@ -2198,6 +2280,7 @@ function MessageAuthorHeading({ children }: { children: string }) {
 function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" }> }) {
   const ctx = use(TimelineRowCtx);
   const { onImageExpand, onFileOpen } = ctx;
+  const anchored = ctx.anchoredIds.has(row.message.id);
   const senderThreadId = row.message.senderThreadId;
   const resources = useMemo(
     () => selectMessageImageResources(row.message.attachments),
@@ -2525,7 +2608,12 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
           </span>
         </div>
       ) : null}
-      <div className="flex w-full max-w-[80%] items-center justify-end pe-1 text-xs tabular-nums opacity-0 transition-opacity duration-200 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover:opacity-100">
+      <div
+        className={cn(
+          "flex w-full max-w-[80%] items-center justify-end pe-1 text-xs tabular-nums opacity-0 transition-opacity duration-200 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover:opacity-100",
+          anchored && "opacity-100",
+        )}
+      >
         <div className="flex shrink-0 items-center gap-2">
           <Tooltip>
             <TooltipTrigger render={<p className="text-muted-foreground text-xs tabular-nums" />}>
@@ -2558,6 +2646,13 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
                 variant="ghost"
               />
             )}
+            {ctx.anchorThreadKey && isMessageAnchorable(row.message.role) ? (
+              <MessageAnchorButton
+                threadKey={ctx.anchorThreadKey}
+                messageId={row.message.id}
+                anchored={anchored}
+              />
+            ) : null}
           </div>
         </div>
       </div>
@@ -2880,12 +2975,13 @@ function AssistantMessageMeta({
   alwaysVisible?: boolean;
 }) {
   const ctx = use(TimelineRowCtx);
+  const anchored = ctx.anchoredIds.has(message.id);
 
   return (
     <div
       className={cn(
         "flex items-center gap-2 text-xs tabular-nums transition-opacity duration-200",
-        alwaysVisible
+        alwaysVisible || anchored
           ? "opacity-100"
           : "opacity-0 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover/assistant:opacity-100",
         className,
@@ -2903,6 +2999,13 @@ function AssistantMessageMeta({
       />
       {projectedItem?.item.type === "assistant_message" ? (
         <AssistantForkButton projectedItem={projectedItem} />
+      ) : null}
+      {!message.streaming && ctx.anchorThreadKey && isMessageAnchorable(message.role) ? (
+        <MessageAnchorButton
+          threadKey={ctx.anchorThreadKey}
+          messageId={message.id}
+          anchored={anchored}
+        />
       ) : null}
       {!message.streaming && (
         <Tooltip>

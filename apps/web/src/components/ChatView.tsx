@@ -152,6 +152,7 @@ import {
   Fragment,
   lazy,
   memo,
+  type CSSProperties,
   type SetStateAction,
   Suspense,
   useCallback,
@@ -441,6 +442,8 @@ import { DraftHeroHeadline } from "./chat/DraftHeroHeadline";
 import { ExpandedImageDialog } from "./chat/ExpandedImageDialog";
 import { PullRequestThreadDialog } from "./PullRequestThreadDialog";
 import type { AssistantCitationRequest } from "./chat/AssistantCitationSource";
+import { useMessageAnchorStore } from "~/messageAnchorStore";
+import { resolveAnchorColor } from "~/messageAnchors.logic";
 import { MessagesTimeline, type MessagesTimelineHistoryControls } from "./chat/MessagesTimeline";
 import { ProviderSubagentBar } from "./chat/ProviderSubagentBar";
 import { getTriggerDisplayModelName } from "./chat/providerIconUtils";
@@ -3961,6 +3964,34 @@ export default function ChatView(props: ChatViewProps) {
     () => timelineEntries.flatMap((entry) => (entry.kind === "message" ? [entry.message] : [])),
     [timelineEntries],
   );
+  // Anchors are only trusted against the complete history: a partial page would
+  // look like deleted messages and drop their anchors.
+  const anchorHistoryComplete =
+    isServerThread &&
+    threadStatus === "live" &&
+    !serverThreadHistory.hasMoreHistory &&
+    !serverThreadHistory.loading &&
+    timelineMessages.length > 0;
+  useEffect(() => {
+    if (!anchorHistoryComplete || activeThreadKey === null) return;
+    useMessageAnchorStore
+      .getState()
+      .pruneThread(activeThreadKey, new Set(timelineMessages.map((message) => message.id)));
+  }, [activeThreadKey, anchorHistoryComplete, timelineMessages]);
+  const messageAnchorColor = useClientSettings((settings) => settings.messageAnchorColor);
+  const anchorColorStyle = useMemo(
+    () => ({ "--anchor-color": resolveAnchorColor(messageAnchorColor) }) as CSSProperties,
+    [messageAnchorColor],
+  );
+  const [timelineJumpRequest, setTimelineJumpRequest] = useState<{
+    messageId: string;
+    nonce: number;
+  } | null>(null);
+  // Consumed by the header anchors control.
+  const requestAnchorJump = useCallback((messageId: string) => {
+    setTimelineJumpRequest({ messageId, nonce: Date.now() });
+  }, []);
+  void requestAnchorJump;
   const displayedTimeline = resolveThreadSwitchTimeline({
     loading: timelineEntries.length === 0 && threadSyncPhase !== null,
     activeThreadKey,
@@ -11322,6 +11353,7 @@ export default function ChatView(props: ChatViewProps) {
           "flex min-h-0 min-w-0 flex-col overflow-x-hidden",
           rightPanelMaximized ? "w-0 flex-none" : "flex-1",
         )}
+        style={anchorColorStyle}
         data-chat-column-maximized-away={rightPanelMaximized ? "true" : "false"}
       >
         {/* Top bar */}
@@ -11520,6 +11552,7 @@ export default function ChatView(props: ChatViewProps) {
                 onContentOverflowChange={setTimelineOverflows}
                 onToolOutputCollapsedAtEnd={onToolOutputCollapsedAtEnd}
                 onManualNavigation={cancelTimelineLiveFollowForUserNavigation}
+                jumpRequest={timelineJumpRequest}
                 cancelPositionRestoreRef={cancelPositionRestoreRef}
                 hideEmptyPlaceholder={isDraftHeroState || threadDetailLoading}
                 topFadeEnabled={!hasTimelineTopBanner}
