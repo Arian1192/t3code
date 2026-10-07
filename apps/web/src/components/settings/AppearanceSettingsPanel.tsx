@@ -29,6 +29,7 @@ import { useScopedSettings, useUpdateScopedSettings } from "./useScopedSettings"
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 import { DraftInput } from "../ui/draft-input";
 import { Switch } from "../ui/switch";
+import { ProviderAccentColorPicker } from "./ProviderAccentColorPicker";
 import { ThemeLibrary } from "./ThemeSettings";
 import {
   SettingResetButton,
@@ -415,6 +416,32 @@ export function AppearanceSettingsPanel() {
             }
           />
         ) : null}
+
+        <SettingsRow
+          {...searchableSetting("setting-message-anchor-color")}
+          description="Colour of anchored messages in the timeline, the header list, and the minimap."
+          resetAction={
+            settings.messageAnchorColor !== DEFAULT_UNIFIED_SETTINGS.messageAnchorColor ? (
+              <SettingResetButton
+                label="anchor colour"
+                onClick={() =>
+                  updateSettings({
+                    messageAnchorColor: DEFAULT_UNIFIED_SETTINGS.messageAnchorColor,
+                  })
+                }
+              />
+            ) : null
+          }
+          control={
+            <ProviderAccentColorPicker
+              displayName="anchors"
+              layout="inline"
+              value={settings.messageAnchorColor}
+              commitDelayMs={120}
+              onCommit={(value) => updateSettings({ messageAnchorColor: value })}
+            />
+          }
+        />
 
         {showEnvironmentIdentification ? (
           <SettingsRow
