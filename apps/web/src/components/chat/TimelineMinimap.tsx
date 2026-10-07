@@ -272,7 +272,7 @@ export function TimelineMinimap({
                       />
                     ) : null}
                     <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                      {activeItem.userText ?? "User message"}
+                      {activeItem.anchorLabel ?? activeItem.userText ?? "User message"}
                     </span>
                   </span>
                   {activeItem.assistantText ? (

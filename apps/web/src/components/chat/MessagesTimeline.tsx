@@ -625,7 +625,11 @@ const ConversationTimeline = memo(function ConversationTimeline({
   );
   const anchoredIds = new Set(threadAnchors.map((anchor) => anchor.messageId));
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
-  const minimapItems = deriveTimelineMinimapItems(rows, anchoredIds);
+  const anchorLabels = new Map<string, string>();
+  for (const anchor of threadAnchors) {
+    if (anchor.label) anchorLabels.set(anchor.messageId, anchor.label);
+  }
+  const minimapItems = deriveTimelineMinimapItems(rows, anchoredIds, anchorLabels);
   const scrollToMessage = (messageId: string) => {
     const index = rows.findIndex((row) => row.kind === "message" && row.message.id === messageId);
     if (index < 0) return;
