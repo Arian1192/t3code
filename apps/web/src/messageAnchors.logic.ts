@@ -5,12 +5,15 @@ import type { ChatMessage } from "./types";
 export interface MessageAnchor {
   readonly messageId: string;
   readonly anchoredAt: string;
+  /** User-chosen name shown instead of the message preview. */
+  readonly label?: string;
 }
 
 export interface ResolvedMessageAnchor {
   readonly messageId: string;
   readonly role: "user" | "assistant";
   readonly preview: string;
+  readonly label: string | null;
   readonly createdAt: string;
 }
 
@@ -19,6 +22,7 @@ type AnchorSourceMessage = Pick<ChatMessage, "role" | "text" | "createdAt"> & {
 };
 
 export const DEFAULT_ANCHOR_COLOR = "var(--primary)";
+export const MAX_ANCHOR_LABEL_LENGTH = 80;
 
 export function isMessageAnchorable(role: ChatMessage["role"]): boolean {
   return role === "user" || role === "assistant";
@@ -49,19 +53,36 @@ export function resolveVisibleAnchors(
   messages: ReadonlyArray<AnchorSourceMessage>,
 ): ResolvedMessageAnchor[] {
   if (anchors.length === 0) return [];
-  const anchoredIds = new Set(anchors.map((anchor) => anchor.messageId));
+  const anchorsById = new Map(anchors.map((anchor) => [anchor.messageId, anchor]));
   const resolved: ResolvedMessageAnchor[] = [];
   for (const message of messages) {
-    if (!anchoredIds.has(message.id)) continue;
+    const anchor = anchorsById.get(message.id);
+    if (!anchor) continue;
     if (message.role !== "user" && message.role !== "assistant") continue;
     resolved.push({
       messageId: message.id,
       role: message.role,
       preview: anchorPreview(message.text),
+      label: anchor.label ?? null,
       createdAt: message.createdAt,
     });
   }
   return resolved;
+}
+
+/** Trims and caps the label; a blank label removes it so the preview shows again. */
+export function renameMessageAnchor(
+  anchors: ReadonlyArray<MessageAnchor>,
+  messageId: string,
+  label: string,
+): ReadonlyArray<MessageAnchor> {
+  if (!anchors.some((anchor) => anchor.messageId === messageId)) return anchors;
+  const nextLabel = label.trim().slice(0, MAX_ANCHOR_LABEL_LENGTH);
+  return anchors.map((anchor) => {
+    if (anchor.messageId !== messageId) return anchor;
+    const { label: _previous, ...rest } = anchor;
+    return nextLabel.length > 0 ? { ...rest, label: nextLabel } : rest;
+  });
 }
 
 /** Returns the same array when every anchor still has its message, so callers can skip writes. */
