@@ -947,9 +947,16 @@ const ConversationTimeline = memo(function ConversationTimeline({
     [threadAnchors],
   );
   const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const anchorLabels = useMemo(() => {
+    const labels = new Map<string, string>();
+    for (const anchor of threadAnchors) {
+      if (anchor.label) labels.set(anchor.messageId, anchor.label);
+    }
+    return labels;
+  }, [threadAnchors]);
   const minimapItems = useMemo(
-    () => deriveTimelineMinimapItems(rows, anchoredIds),
-    [rows, anchoredIds],
+    () => deriveTimelineMinimapItems(rows, anchoredIds, anchorLabels),
+    [rows, anchoredIds, anchorLabels],
   );
   const scrollToMessage = useCallback(
     (messageId: string) => {
@@ -1991,7 +1998,7 @@ function TimelineMinimap({
                       />
                     ) : null}
                     <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
-                      {activeItem.userText ?? "User message"}
+                      {activeItem.anchorLabel ?? activeItem.userText ?? "User message"}
                     </span>
                   </span>
                   {activeItem.assistantText ? (
