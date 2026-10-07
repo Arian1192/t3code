@@ -79,3 +79,36 @@ describe("timeline minimap previews", () => {
     expect(resolveTimelineMinimapPreview(first)?.assistantText).toBe("First");
   });
 });
+
+describe("timeline minimap anchors", () => {
+  it("flags nothing without anchors", () => {
+    const items = deriveTimelineMinimapItems(
+      rows([
+        ["user", "a"],
+        ["assistant", "b"],
+      ]),
+    );
+    expect(items.map((item) => item.anchoredRowIndex)).toEqual([null]);
+  });
+
+  it("anchored user message flags its own row", () => {
+    const source = rows([
+      ["user", "a"],
+      ["assistant", "b"],
+      ["user", "c"],
+    ]);
+    const items = deriveTimelineMinimapItems(source, new Set(["message-2"]));
+    expect(items.map((item) => item.anchoredRowIndex)).toEqual([null, 2]);
+  });
+
+  it("anchored assistant message flags its turn and targets its row", () => {
+    const source = rows([
+      ["user", "a"],
+      ["assistant", "b"],
+      ["assistant", "c"],
+      ["user", "d"],
+    ]);
+    const items = deriveTimelineMinimapItems(source, new Set(["message-2"]));
+    expect(items.map((item) => item.anchoredRowIndex)).toEqual([2, null]);
+  });
+});
