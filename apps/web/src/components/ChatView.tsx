@@ -444,6 +444,7 @@ import { PullRequestThreadDialog } from "./PullRequestThreadDialog";
 import type { AssistantCitationRequest } from "./chat/AssistantCitationSource";
 import { useMessageAnchorStore } from "~/messageAnchorStore";
 import { resolveAnchorColor } from "~/messageAnchors.logic";
+import { MessageAnchorsControl } from "./chat/MessageAnchorsControl";
 import { MessagesTimeline, type MessagesTimelineHistoryControls } from "./chat/MessagesTimeline";
 import { ProviderSubagentBar } from "./chat/ProviderSubagentBar";
 import { getTriggerDisplayModelName } from "./chat/providerIconUtils";
@@ -3991,7 +3992,6 @@ export default function ChatView(props: ChatViewProps) {
   const requestAnchorJump = useCallback((messageId: string) => {
     setTimelineJumpRequest({ messageId, nonce: Date.now() });
   }, []);
-  void requestAnchorJump;
   const displayedTimeline = resolveThreadSwitchTimeline({
     loading: timelineEntries.length === 0 && threadSyncPhase !== null,
     activeThreadKey,
@@ -11261,9 +11261,20 @@ export default function ChatView(props: ChatViewProps) {
     onToggleThreadPanel: toggleThreadPanel,
     onToggleRightPanel: toggleRightPanel,
   } satisfies PanelLayoutControlsProps;
+  // Only this instance carries the anchors: it renders wherever the cluster is visible,
+  // while threadPanelHeaderControl would duplicate it beside it when the right panel is open.
+  const anchorsControl = activeThreadKey ? (
+    <MessageAnchorsControl
+      threadKey={activeThreadKey}
+      messages={timelineMessages}
+      timestampFormat={timestampFormat}
+      onJump={requestAnchorJump}
+    />
+  ) : null;
   const panelToggleControls = (
     <PanelLayoutControls
       {...panelToggleControlProps}
+      anchorsControl={anchorsControl}
       showThreadPanelControl={!inlineRightPanelOwnsTitleBar}
     />
   );
