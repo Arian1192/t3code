@@ -7,14 +7,18 @@ export interface TimelineMinimapItem {
   readonly assistantText: string | null;
   /** Row of the first anchored message in this turn; the minimap jumps there instead of the prompt. */
   readonly anchoredRowIndex: number | null;
+  /** User-chosen name of that anchored message, shown as the preview title. */
+  readonly anchorLabel: string | null;
 }
 
 const EMPTY_ANCHORED_IDS: ReadonlySet<string> = new Set();
+const EMPTY_ANCHOR_LABELS: ReadonlyMap<string, string> = new Map();
 
 /** Keep full source text untouched until a minimap preview is opened. */
 export function deriveTimelineMinimapItems(
   rows: ReadonlyArray<MessagesTimelineRow>,
   anchoredMessageIds: ReadonlySet<string> = EMPTY_ANCHORED_IDS,
+  anchorLabels: ReadonlyMap<string, string> = EMPTY_ANCHOR_LABELS,
 ): TimelineMinimapItem[] {
   const items: TimelineMinimapItem[] = [];
   for (let index = 0; index < rows.length; index += 1) {
@@ -23,12 +27,16 @@ export function deriveTimelineMinimapItems(
       continue;
     }
 
+    const anchoredRowIndex = resolveAnchoredRowIndexForTurn(rows, index, anchoredMessageIds);
+    const anchoredRow = anchoredRowIndex === null ? undefined : rows[anchoredRowIndex];
     items.push({
       id: row.id,
       rowIndex: index,
       userText: row.message.text,
       assistantText: resolveFinalAssistantTextForTurn(rows, index),
-      anchoredRowIndex: resolveAnchoredRowIndexForTurn(rows, index, anchoredMessageIds),
+      anchoredRowIndex,
+      anchorLabel:
+        anchoredRow?.kind === "message" ? (anchorLabels.get(anchoredRow.message.id) ?? null) : null,
     });
   }
   return items;

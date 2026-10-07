@@ -112,3 +112,24 @@ describe("timeline minimap anchors", () => {
     expect(items.map((item) => item.anchoredRowIndex)).toEqual([2, null]);
   });
 });
+
+describe("timeline minimap anchor labels", () => {
+  it("carries the label of the anchored message in the turn", () => {
+    const source = rows([
+      ["user", "a"],
+      ["assistant", "b"],
+      ["user", "c"],
+    ]);
+    const items = deriveTimelineMinimapItems(
+      source,
+      new Set(["message-1", "message-2"]),
+      new Map([["message-1", "Sample JSON"]]),
+    );
+    expect(items.map((item) => item.anchorLabel)).toEqual(["Sample JSON", null]);
+  });
+
+  it("has no label without anchors", () => {
+    const items = deriveTimelineMinimapItems(rows([["user", "a"]]));
+    expect(items[0]?.anchorLabel).toBeNull();
+  });
+});
