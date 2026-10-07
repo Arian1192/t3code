@@ -267,6 +267,12 @@ export const SETTINGS_SEARCH_ITEMS = [
     macOnly: true,
   },
   {
+    id: "setting-message-anchor-color",
+    title: "Anchor colour",
+    to: "/settings/appearance",
+    searchTerms: ["anchor color anchored messages minimap marks"],
+  },
+  {
     id: "diff-color-scheme",
     title: "Diff colors",
     to: "/settings/appearance",

@@ -552,3 +552,14 @@ describe("settings sidebar scope", () => {
     expect(isSettingsOverviewVisible({ project: "project", checkout: "checkout" })).toBe(true);
   });
 });
+
+describe("message anchor colour search", () => {
+  it("finds the anchor colour setting by colour and color spellings", () => {
+    expect(searchSettings("anchor colour").map((item) => item.id)).toContain(
+      "setting-message-anchor-color",
+    );
+    expect(searchSettings("anchor color").map((item) => item.id)).toContain(
+      "setting-message-anchor-color",
+    );
+  });
+});

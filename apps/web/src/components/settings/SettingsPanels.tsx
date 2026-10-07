@@ -144,6 +144,7 @@ import {
 } from "../ui/number-field";
 import { Select, SelectItem, SelectPopup, SelectTrigger, SelectValue } from "../ui/select";
 import { Switch } from "../ui/switch";
+import { ProviderAccentColorPicker } from "./ProviderAccentColorPicker";
 import { ScopedSwitch } from "./ScopedSwitch";
 import { stackedThreadToast, toastManager } from "../ui/toast";
 import { Tooltip, TooltipPopup, TooltipTrigger } from "../ui/tooltip";
@@ -576,6 +577,9 @@ export function useSettingsRestore(onRestored?: () => void) {
         ? ["Chat background blur"]
         : []),
       ...(settings.appIcon !== DEFAULT_UNIFIED_SETTINGS.appIcon ? ["App icon"] : []),
+      ...(settings.messageAnchorColor !== DEFAULT_UNIFIED_SETTINGS.messageAnchorColor
+        ? ["Anchor colour"]
+        : []),
       ...(settings.diffColorScheme !== DEFAULT_UNIFIED_SETTINGS.diffColorScheme
         ? ["Diff colors"]
         : []),
@@ -739,6 +743,7 @@ export function useSettingsRestore(onRestored?: () => void) {
       settings.chatBackgroundDim,
       settings.chatBackgroundBlur,
       settings.appIcon,
+      settings.messageAnchorColor,
       settings.panelAnimationDurationMs,
       settings.responseStreamingMode,
       settings.persistComposerContextStrip,
@@ -851,6 +856,7 @@ export function useSettingsRestore(onRestored?: () => void) {
       chatBackgroundDim: DEFAULT_UNIFIED_SETTINGS.chatBackgroundDim,
       chatBackgroundBlur: DEFAULT_UNIFIED_SETTINGS.chatBackgroundBlur,
       appIcon: DEFAULT_UNIFIED_SETTINGS.appIcon,
+      messageAnchorColor: DEFAULT_UNIFIED_SETTINGS.messageAnchorColor,
       panelAnimationDurationMs: DEFAULT_UNIFIED_SETTINGS.panelAnimationDurationMs,
       sidebarThreadPreviewCount: DEFAULT_UNIFIED_SETTINGS.sidebarThreadPreviewCount,
       sidebarProjectGroupingMode: DEFAULT_UNIFIED_SETTINGS.sidebarProjectGroupingMode,
@@ -1541,6 +1547,32 @@ export function AppearanceSettingsPanel() {
             }
           />
         ) : null}
+
+        <SettingsRow
+          {...searchableSetting("setting-message-anchor-color")}
+          description="Colour of anchored messages in the timeline, the header list, and the minimap."
+          resetAction={
+            settings.messageAnchorColor !== DEFAULT_UNIFIED_SETTINGS.messageAnchorColor ? (
+              <SettingResetButton
+                label="anchor colour"
+                onClick={() =>
+                  updateSettings({
+                    messageAnchorColor: DEFAULT_UNIFIED_SETTINGS.messageAnchorColor,
+                  })
+                }
+              />
+            ) : null
+          }
+          control={
+            <ProviderAccentColorPicker
+              displayName="anchors"
+              layout="inline"
+              value={settings.messageAnchorColor}
+              commitDelayMs={120}
+              onCommit={(value) => updateSettings({ messageAnchorColor: value })}
+            />
+          }
+        />
 
         {showEnvironmentIdentification ? (
           <SettingsRow
