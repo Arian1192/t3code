@@ -22,6 +22,8 @@ import { formatChatTimestampTooltip, formatDayAwareTimestamp } from "../../times
 import { useV2ItemSupport } from "../../state/v2ItemSupport";
 import { TimelineRowCtx, TimelineRowActivityCtx, type TimelineRow } from "./timelineRowContext";
 import { MESSAGE_HEADING_LEVEL, MessageAuthorHeading } from "./TimelineRowParts";
+import { MessageAnchorButton } from "./MessageAnchorButton";
+import { isMessageAnchorable } from "~/messageAnchors.logic";
 
 export function AssistantTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" }> }) {
   const ctx = use(TimelineRowCtx);
@@ -157,12 +159,13 @@ function AssistantMessageMeta({
   alwaysVisible?: boolean;
 }) {
   const ctx = use(TimelineRowCtx);
+  const anchored = ctx.anchoredIds.has(message.id);
 
   return (
     <div
       className={cn(
         "flex items-center gap-2 text-xs tabular-nums transition-opacity duration-200",
-        alwaysVisible
+        alwaysVisible || anchored
           ? "opacity-100"
           : "opacity-0 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover/assistant:opacity-100",
         className,
@@ -180,6 +183,13 @@ function AssistantMessageMeta({
       />
       {projectedItem?.item.type === "assistant_message" ? (
         <AssistantForkButton projectedItem={projectedItem} />
+      ) : null}
+      {!message.streaming && ctx.anchorThreadKey && isMessageAnchorable(message.role) ? (
+        <MessageAnchorButton
+          threadKey={ctx.anchorThreadKey}
+          messageId={message.id}
+          anchored={anchored}
+        />
       ) : null}
       {!message.streaming && (
         <Tooltip>

@@ -105,7 +105,15 @@ import { resolveProjectSettings } from "@t3tools/shared/projectSettings";
 import { resolveThreadReferenceCopyTarget } from "@t3tools/client-runtime/thread-reference";
 import { resolveTerminalSessionLabel } from "@t3tools/shared/terminalLabels";
 import { useAtomValue } from "@effect/atom-react";
-import { type SetStateAction, use, useEffect, useLayoutEffect, useRef, useState } from "react";
+import {
+  type CSSProperties,
+  type SetStateAction,
+  use,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { BackgroundThreadContext } from "./chat/backgroundThread";
 import { useLocation, useNavigate } from "@tanstack/react-router";
 import { assistantCitationFromLocation } from "../lib/assistantCitationNavigation";
@@ -258,6 +266,8 @@ import {
   RevertConfirmHost,
 } from "./chat/ChatOverlayHosts";
 import type { AssistantCitationRequest } from "./chat/AssistantCitationSource";
+import { useMessageAnchorStore } from "~/messageAnchorStore";
+import { resolveAnchorColor } from "~/messageAnchors.logic";
 import type { MessagesTimelineHistoryControls } from "./chat/MessagesTimeline";
 import { ThreadTimeline } from "./chat/ThreadTimeline";
 import { ProviderSubagentBar } from "./chat/ProviderSubagentBar";
@@ -1502,6 +1512,33 @@ export default function ChatView(props: ChatViewProps) {
   const timelineMessages = timelineEntries.flatMap((entry) =>
     entry.kind === "message" ? [entry.message] : [],
   );
+  // Anchors are only trusted against the complete history: a partial page would
+  // look like deleted messages and drop their anchors.
+  const anchorHistoryComplete =
+    isServerThread &&
+    threadStatus === "live" &&
+    !serverThreadHistory.hasMoreHistory &&
+    !serverThreadHistory.loading &&
+    timelineMessages.length > 0;
+  useEffect(() => {
+    if (!anchorHistoryComplete || activeThreadKey === null) return;
+    useMessageAnchorStore
+      .getState()
+      .pruneThread(activeThreadKey, new Set(timelineMessages.map((message) => message.id)));
+  }, [activeThreadKey, anchorHistoryComplete, timelineMessages]);
+  const messageAnchorColor = useClientSettings((settings) => settings.messageAnchorColor);
+  const anchorColorStyle = {
+    "--anchor-color": resolveAnchorColor(messageAnchorColor),
+  } as CSSProperties;
+  const [timelineJumpRequest, setTimelineJumpRequest] = useState<{
+    messageId: string;
+    nonce: number;
+  } | null>(null);
+  // Consumed by the header anchors control.
+  const requestAnchorJump = (messageId: string) => {
+    setTimelineJumpRequest({ messageId, nonce: Date.now() });
+  };
+  void requestAnchorJump;
   const timelineEmpty = timelineEntries.length === 0 && !hasStreamedTimelineRows;
   const displayedTimeline = resolveThreadSwitchTimeline({
     loading: timelineEmpty && threadSyncPhase !== null,
@@ -3183,6 +3220,7 @@ export default function ChatView(props: ChatViewProps) {
           "flex min-h-0 min-w-0 flex-col overflow-x-hidden",
           rightPanelMaximized ? "w-0 flex-none" : "flex-1",
         )}
+        style={anchorColorStyle}
         data-chat-column-maximized-away={rightPanelMaximized ? "true" : "false"}
         data-chat-column
       >
@@ -3422,6 +3460,7 @@ export default function ChatView(props: ChatViewProps) {
                 onContentOverflowChange={setTimelineOverflows}
                 onToolOutputCollapsedAtEnd={onToolOutputCollapsedAtEndStable}
                 onManualNavigation={cancelTimelineLiveFollowForUserNavigationStable}
+                jumpRequest={timelineJumpRequest}
                 cancelPositionRestoreRef={cancelPositionRestoreRef}
                 hideEmptyPlaceholder={isDraftHeroState || threadDetailLoading}
                 emptyPlaceholderInset={composerReservedHeight}

@@ -4,6 +4,8 @@ import { useChatCanvas } from "./ChatCanvasContext";
 import { WorkLogBlock } from "./WorkLog";
 import type { WorktreeSetupSnapshot } from "@t3tools/contracts";
 import { deriveTimelineMinimapItems } from "./timelineMinimapItems";
+import { EMPTY_ANCHORS, useMessageAnchorStore } from "~/messageAnchorStore";
+import { scopedThreadKey } from "@t3tools/client-runtime/environment";
 import {
   type AssistantCitation,
   type EnvironmentId,
@@ -258,6 +260,8 @@ interface MessagesTimelineProps {
   onToolOutputCollapsedAtEnd?: () => void;
   onManualNavigation: () => void;
   findOpen?: boolean;
+  /** Scrolls to and briefly highlights a message when the nonce changes. */
+  jumpRequest?: { messageId: string; nonce: number } | null;
   cancelPositionRestoreRef?: React.RefObject<(() => void) | null> | undefined;
   hideEmptyPlaceholder?: boolean;
   /** Composer space to center the empty state against; held steady through collapse. */
@@ -358,6 +362,7 @@ const ConversationTimeline = memo(function ConversationTimeline({
   liveFollowEnabled,
   onToolOutputCollapsedAtEnd,
   onManualNavigation,
+  jumpRequest = null,
   cancelPositionRestoreRef,
   hideEmptyPlaceholder = false,
   emptyPlaceholderInset,
@@ -613,7 +618,37 @@ const ConversationTimeline = memo(function ConversationTimeline({
   const rows = useStableRows(rawRows, listIdentityKey);
   // Run status/timestamps change per stream event; keep them out of shared row context.
   const runs = useStableHandoffRuns(runsProp);
-  const minimapItems = deriveTimelineMinimapItems(rows);
+  const anchorThreadKey = citationThreadRef ? scopedThreadKey(citationThreadRef) : null;
+  const threadAnchors = useMessageAnchorStore(
+    (state) =>
+      (anchorThreadKey ? state.anchorsByThread[anchorThreadKey] : undefined) ?? EMPTY_ANCHORS,
+  );
+  const anchoredIds = new Set(threadAnchors.map((anchor) => anchor.messageId));
+  const [highlightedMessageId, setHighlightedMessageId] = useState<string | null>(null);
+  const minimapItems = deriveTimelineMinimapItems(rows, anchoredIds);
+  const scrollToMessage = (messageId: string) => {
+    const index = rows.findIndex((row) => row.kind === "message" && row.message.id === messageId);
+    if (index < 0) return;
+    onManualNavigation();
+    void listRef.current?.scrollToIndex({
+      index,
+      animated: !window.matchMedia("(prefers-reduced-motion: reduce)").matches,
+      viewOffset: 24,
+    });
+    setHighlightedMessageId(messageId);
+  };
+  // Only a new nonce jumps; later row updates must not re-scroll.
+  const handledJumpNonceRef = useRef<number | null>(null);
+  useEffect(() => {
+    if (!jumpRequest || handledJumpNonceRef.current === jumpRequest.nonce) return;
+    handledJumpNonceRef.current = jumpRequest.nonce;
+    scrollToMessage(jumpRequest.messageId);
+  }, [jumpRequest, scrollToMessage]);
+  useEffect(() => {
+    if (highlightedMessageId === null) return;
+    const timer = setTimeout(() => setHighlightedMessageId(null), 1000);
+    return () => clearTimeout(timer);
+  }, [highlightedMessageId]);
   const minimapRowIndices = minimapItems.map((item) => item.rowIndex);
   const restoreRowIndex =
     restoringThreadPosition && rememberedPosition?.atEnd === false
@@ -909,6 +944,9 @@ const ConversationTimeline = memo(function ConversationTimeline({
     timestampFormat,
     routeThreadKey,
     threadRef: citationThreadRef,
+    anchorThreadKey,
+    anchoredIds,
+    highlightedMessageId,
     markdownCwd,
     resolvedTheme,
     workspaceRoot,
@@ -1161,6 +1199,12 @@ const ConversationTimeline = memo(function ConversationTimeline({
               stripMap={minimapStripMap}
               onWheel={forwardMinimapWheel}
               onSelect={(item) => {
+                const anchoredRow =
+                  item.anchoredRowIndex === null ? undefined : rows[item.anchoredRowIndex];
+                if (anchoredRow?.kind === "message") {
+                  scrollToMessage(anchoredRow.message.id);
+                  return;
+                }
                 onManualNavigation();
                 void listRef.current?.scrollToIndex({
                   index: item.rowIndex,
@@ -1220,6 +1264,8 @@ function getItemType(item: MessagesTimelineRow) {
 }
 
 const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: TimelineRow }) {
+  const { highlightedMessageId } = use(TimelineRowCtx);
+  const highlighted = row.kind === "message" && row.message.id === highlightedMessageId;
   const isExpandedToolGroup = row.kind === "work" && row.isExpandedToolGroup;
   const isSubagentGroup = row.kind === "event" && row.projectedItem.item.type === "subagent";
   const isWorkLogRow =
@@ -1252,9 +1298,12 @@ const TimelineRowContent = memo(function TimelineRowContent({ row }: { row: Time
           row.kind === "assistant-meta"
           ? "group/assistant"
           : null,
+        highlighted && "rounded-lg bg-accent/40",
       )}
       data-timeline-row-id={row.id}
       data-timeline-row-kind={row.kind}
+      // Ring drawn as a shadow in the anchor colour; no ring-* token takes a CSS variable.
+      style={highlighted ? { boxShadow: "0 0 0 1px var(--anchor-color)" } : undefined}
       data-message-id={
         row.kind === "message" || row.kind === "assistant-meta" ? row.message.id : undefined
       }

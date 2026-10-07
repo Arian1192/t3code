@@ -44,6 +44,8 @@ import {
 } from "./SnapShotAttachmentDetails";
 import { GuestMessageName, guestBubbleClassName } from "./guestMessageStyle";
 import { MessageCopyButton } from "./MessageCopyButton";
+import { MessageAnchorButton } from "./MessageAnchorButton";
+import { isMessageAnchorable } from "~/messageAnchors.logic";
 import { promptLinkFor } from "../promptLinks/copyPromptLink";
 import { PierreEntryIcon } from "./PierreEntryIcon";
 import { shouldCollapseUserMessage } from "./MessagesTimeline.logic";
@@ -273,6 +275,7 @@ function UserMessageProjectedStatus({ row }: { row: Extract<TimelineRow, { kind:
 
 function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" }> }) {
   const ctx = use(TimelineRowCtx);
+  const anchored = ctx.anchoredIds.has(row.message.id);
   const { onImageExpand, onFileOpen } = ctx;
   const senderThreadId = row.message.senderThreadId;
   const resources = selectMessageImageResources(row.message.attachments);
@@ -593,7 +596,12 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
       </div>
       <UserMessageProjectedStatus row={row} />
       {!folded || expanded ? (
-        <div className="flex w-full max-w-[80%] items-center justify-end pe-1 text-xs tabular-nums opacity-0 transition-opacity duration-200 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover:opacity-100">
+        <div
+          className={cn(
+            "flex w-full max-w-[80%] items-center justify-end pe-1 text-xs tabular-nums opacity-0 transition-opacity duration-200 pointer-coarse:opacity-100 focus-within:opacity-100 group-hover:opacity-100",
+            anchored && "opacity-100",
+          )}
+        >
           <div className="flex shrink-0 items-center gap-2">
             {folded && senderThreadId ? (
               <InlineButton onClick={() => ctx.onOpenThread(senderThreadId)} tone="muted">
@@ -633,6 +641,13 @@ function UserTimelineRow({ row }: { row: Extract<TimelineRow, { kind: "message" 
                   variant="ghost"
                 />
               )}
+              {ctx.anchorThreadKey && isMessageAnchorable(row.message.role) ? (
+                <MessageAnchorButton
+                  threadKey={ctx.anchorThreadKey}
+                  messageId={row.message.id}
+                  anchored={anchored}
+                />
+              ) : null}
             </div>
           </div>
         </div>

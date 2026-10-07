@@ -42,6 +42,10 @@ export interface TimelineRowSharedState {
   timestampFormat: TimestampFormat;
   routeThreadKey: string;
   threadRef: ScopedThreadRef | null;
+  /** Scoped key for the message-anchor store; null when the thread ref is unknown. */
+  anchorThreadKey: string | null;
+  anchoredIds: ReadonlySet<string>;
+  highlightedMessageId: string | null;
   markdownCwd: string | undefined;
   resolvedTheme: "light" | "dark";
   workspaceRoot: string | undefined;

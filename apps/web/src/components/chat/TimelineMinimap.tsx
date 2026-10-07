@@ -1,6 +1,6 @@
 import { resolveTimelineMinimapPreview, type TimelineMinimapItem } from "./timelineMinimapItems";
 import { useEffect, useRef, useState, type MouseEvent } from "react";
-import { ChevronDownIcon, ChevronUpIcon } from "lucide-react";
+import { AnchorIcon, ChevronDownIcon, ChevronUpIcon } from "lucide-react";
 import { Button } from "../ui/button";
 import {
   resolveTimelineMinimapHeightStyle,
@@ -220,7 +220,8 @@ export function TimelineMinimap({
                 <span
                   aria-hidden="true"
                   className={cn(
-                    "group/strip pointer-events-none absolute left-0 h-0.5 w-6 origin-left -translate-y-1/2 rounded-full transition-transform duration-150",
+                    "group/strip pointer-events-none absolute left-0 w-6 origin-left -translate-y-1/2 rounded-full transition-transform duration-150",
+                    item.anchoredRowIndex !== null ? "h-1" : "h-0.5",
                     activeDistance === 0 ? "bg-muted-foreground/75" : "bg-muted-foreground/35",
                     activeDistance === 0
                       ? "scale-x-100"
@@ -242,6 +243,12 @@ export function TimelineMinimap({
                   }}
                   style={{ top }}
                 >
+                  {item.anchoredRowIndex !== null ? (
+                    <span
+                      className="absolute inset-0 rounded-full"
+                      style={{ backgroundColor: "var(--anchor-color)" }}
+                    />
+                  ) : null}
                   <span className="absolute inset-0 rounded-full bg-foreground/90 opacity-0 transition-opacity duration-150 group-data-[in-view=true]/strip:opacity-100" />
                 </span>
               );
@@ -257,8 +264,16 @@ export function TimelineMinimap({
                 }}
               >
                 <span className="dropdown-glass block rounded-xl p-3 text-left text-popover-foreground shadow-xl shadow-black/25">
-                  <span className="block max-w-full overflow-hidden text-ellipsis whitespace-nowrap text-sm font-medium leading-5">
-                    {activeItem.userText ?? "User message"}
+                  <span className="flex max-w-full items-center gap-1.5 text-sm font-medium leading-5">
+                    {activeItem.anchoredRowIndex !== null ? (
+                      <AnchorIcon
+                        className="size-3 shrink-0"
+                        style={{ color: "var(--anchor-color)" }}
+                      />
+                    ) : null}
+                    <span className="min-w-0 overflow-hidden text-ellipsis whitespace-nowrap">
+                      {activeItem.userText ?? "User message"}
+                    </span>
                   </span>
                   {activeItem.assistantText ? (
                     <span
