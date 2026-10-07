@@ -3,7 +3,9 @@ import { describe, expect, it } from "vite-plus/test";
 import {
   FORK_UPDATE_PROMPT,
   FORK_UPDATE_THREAD_TITLE,
+  buildForkCommitsUrl,
   buildForkCompareUrl,
+  parseForkCommitsResponse,
   parseForkCompareResponse,
   resolveForkUpdateModelSelection,
   resolveForkUpdatePresentation,
@@ -14,6 +16,77 @@ describe("buildForkCompareUrl", () => {
     expect(buildForkCompareUrl("abc123")).toBe(
       "https://api.github.com/repos/pingdotgg/t3code/compare/abc123...main?per_page=1",
     );
+  });
+});
+
+describe("buildForkCommitsUrl", () => {
+  it("asks for up to 100 commits between the merge-base and upstream main", () => {
+    expect(buildForkCommitsUrl("abc123")).toBe(
+      "https://api.github.com/repos/pingdotgg/t3code/compare/abc123...main?per_page=100",
+    );
+  });
+});
+
+describe("parseForkCommitsResponse", () => {
+  const commit = (sha: string, overrides: Record<string, unknown> = {}) => ({
+    sha,
+    html_url: `https://github.com/pingdotgg/t3code/commit/${sha}`,
+    commit: {
+      message: "fix: a thing\n\nbody text",
+      author: { name: "Ada", date: "2026-10-01T10:00:00Z" },
+    },
+    author: { login: "ada-gh" },
+    ...overrides,
+  });
+  const compare = (commits: unknown[]) => ({
+    ahead_by: commits.length,
+    html_url: "https://github.com/pingdotgg/t3code/compare/abc...main",
+    commits,
+  });
+
+  it("returns commits newest first with short sha, first-line title and author", () => {
+    const parsed = parseForkCommitsResponse(
+      compare([commit("1111111aaaa"), commit("2222222bbbb")]),
+    );
+    expect(parsed?.aheadBy).toBe(2);
+    expect(parsed?.htmlUrl).toBe("https://github.com/pingdotgg/t3code/compare/abc...main");
+    expect(parsed?.commits.map((c) => c.sha)).toEqual(["2222222bbbb", "1111111aaaa"]);
+    expect(parsed?.commits[0]).toEqual({
+      sha: "2222222bbbb",
+      shortSha: "2222222",
+      title: "fix: a thing",
+      author: "Ada",
+      date: "2026-10-01T10:00:00Z",
+      htmlUrl: "https://github.com/pingdotgg/t3code/commit/2222222bbbb",
+    });
+  });
+
+  it("falls back to the login, then to unknown, and allows a missing date", () => {
+    const parsed = parseForkCommitsResponse(
+      compare([
+        commit("aaaaaaa1", { commit: { message: "x", author: {} } }),
+        commit("bbbbbbb2", { commit: { message: "y" }, author: null }),
+      ]),
+    );
+    expect(parsed?.commits[0]).toMatchObject({ author: "unknown", date: null });
+    expect(parsed?.commits[1]).toMatchObject({ author: "ada-gh", date: null });
+  });
+
+  it("skips malformed commit entries", () => {
+    const parsed = parseForkCommitsResponse(
+      compare([commit("aaaaaaa1"), null, { sha: 5 }, commit("bbbbbbb2", { html_url: undefined })]),
+    );
+    expect(parsed?.commits.map((c) => c.sha)).toEqual(["aaaaaaa1"]);
+  });
+
+  it("returns null when the payload is not a compare response", () => {
+    expect(parseForkCommitsResponse({ message: "Not Found" })).toBeNull();
+    expect(parseForkCommitsResponse(null)).toBeNull();
+  });
+
+  it("returns an empty list when commits is missing", () => {
+    const parsed = parseForkCommitsResponse({ ahead_by: 2, html_url: "https://x" });
+    expect(parsed).toEqual({ aheadBy: 2, htmlUrl: "https://x", commits: [] });
   });
 });
 
@@ -76,15 +149,15 @@ describe("resolveForkUpdatePresentation", () => {
     });
   });
 
-  it("highlights the count and starts the update when behind", () => {
+  it("highlights the count and opens the review popover when behind", () => {
     expect(resolveForkUpdatePresentation({ kind: "ready", aheadBy: 3 })).toEqual({
-      tooltip: "3 upstream commits to review. Click to start the update",
+      tooltip: "3 upstream commits. Click to review",
       count: 3,
       highlighted: true,
-      action: "update",
+      action: "open",
     });
     expect(resolveForkUpdatePresentation({ kind: "ready", aheadBy: 1 }).tooltip).toBe(
-      "1 upstream commit to review. Click to start the update",
+      "1 upstream commit. Click to review",
     );
   });
 

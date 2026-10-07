@@ -37,11 +37,72 @@ export function parseForkCompareResponse(
   return { aheadBy, htmlUrl };
 }
 
+export function buildForkCommitsUrl(baseSha: string): string {
+  return `https://api.github.com/repos/pingdotgg/t3code/compare/${baseSha}...main?per_page=100`;
+}
+
+export interface ForkUpstreamCommit {
+  readonly sha: string;
+  readonly shortSha: string;
+  readonly title: string;
+  readonly author: string;
+  readonly date: string | null;
+  readonly htmlUrl: string;
+}
+
+function parseForkCommit(entry: unknown): ForkUpstreamCommit | null {
+  if (typeof entry !== "object" || entry === null) return null;
+  const { sha, html_url: htmlUrl, commit, author } = entry as Record<string, unknown>;
+  if (typeof sha !== "string" || typeof htmlUrl !== "string") return null;
+  if (typeof commit !== "object" || commit === null) return null;
+  const { message, author: commitAuthor } = commit as Record<string, unknown>;
+  if (typeof message !== "string") return null;
+  const { name, date } = (
+    typeof commitAuthor === "object" && commitAuthor !== null ? commitAuthor : {}
+  ) as Record<string, unknown>;
+  const login =
+    typeof author === "object" && author !== null
+      ? (author as Record<string, unknown>).login
+      : undefined;
+  return {
+    sha,
+    shortSha: sha.slice(0, 7),
+    title: (message.split("\n")[0] ?? "").trim(),
+    author:
+      typeof name === "string" && name
+        ? name
+        : typeof login === "string" && login
+          ? login
+          : "unknown",
+    date: typeof date === "string" ? date : null,
+    htmlUrl,
+  };
+}
+
+/** Commits come back newest first (GitHub lists them oldest first). */
+export function parseForkCommitsResponse(payload: unknown): {
+  readonly aheadBy: number;
+  readonly htmlUrl: string;
+  readonly commits: ReadonlyArray<ForkUpstreamCommit>;
+} | null {
+  const compare = parseForkCompareResponse(payload);
+  if (!compare) return null;
+  const rawCommits = (payload as Record<string, unknown>).commits;
+  const commits: ForkUpstreamCommit[] = [];
+  if (Array.isArray(rawCommits)) {
+    for (const entry of rawCommits) {
+      const commit = parseForkCommit(entry);
+      if (commit) commits.unshift(commit);
+    }
+  }
+  return { ...compare, commits };
+}
+
 export function resolveForkUpdatePresentation(state: ForkUpdateCheckState): {
   readonly tooltip: string;
   readonly count: number | null;
   readonly highlighted: boolean;
-  readonly action: "check" | "update" | "none";
+  readonly action: "check" | "open" | "none";
 } {
   switch (state.kind) {
     case "unknown":
@@ -63,10 +124,10 @@ export function resolveForkUpdatePresentation(state: ForkUpdateCheckState): {
     case "ready":
       return state.aheadBy > 0
         ? {
-            tooltip: `${state.aheadBy} upstream ${state.aheadBy === 1 ? "commit" : "commits"} to review. Click to start the update`,
+            tooltip: `${state.aheadBy} upstream ${state.aheadBy === 1 ? "commit" : "commits"}. Click to review`,
             count: state.aheadBy,
             highlighted: true,
-            action: "update",
+            action: "open",
           }
         : {
             tooltip: "Up to date with upstream. Click to re-check",
